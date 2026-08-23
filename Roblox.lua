@@ -1,61 +1,65 @@
--- КИТАЙСКАЯ ШЛЯПА (РАБОЧАЯ, БЕЗ ЧИТОВ)
+-- N1zoxir: НОРМАЛЬНАЯ КИТАЙСКАЯ ШЛЯПА (КОНУС)
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 
-local function createHat()
+local function createCoolieHat()
     local char = Player.Character
     if not char then return end
     local head = char:FindFirstChild("Head")
     if not head then return end
-    
-    -- Удаляем старую шляпу
-    for _, v in pairs(char:GetChildren()) do
-        if v.Name == "ChinaHat" then v:Destroy() end
+
+    -- Удаляем старую шляпу, если она есть
+    for _, child in pairs(char:GetChildren()) do
+        if child.Name == "CoolieHat" then
+            child:Destroy()
+        end
     end
-    
-    -- ОСНОВАНИЕ (широкая часть)
+
+    -- 1. ОСНОВАНИЕ ШЛЯПЫ (широкий край)
     local base = Instance.new("Part")
-    base.Name = "ChinaHat"
-    base.Size = Vector3.new(2.5, 0.2, 2.5)
-    base.BrickColor = BrickColor.new("Bright red")
+    base.Name = "CoolieHat"
+    base.Size = Vector3.new(2.4, 0.15, 2.4)
+    base.BrickColor = BrickColor.new("Bright yellow") -- Цвет соломы
     base.Material = Enum.Material.SmoothPlastic
     base.Shape = Enum.PartType.Cylinder
-    base.CFrame = head.CFrame * CFrame.new(0, 1.5, 0)
+    base.Position = head.Position + Vector3.new(0, 1.5, 0)
     base.Parent = char
-    
-    -- КОНУС (верхушка)
+
+    -- 2. КОНУС (основная часть шляпы)
     local cone = Instance.new("Part")
-    cone.Name = "ChinaHat"
-    cone.Size = Vector3.new(0.8, 1.2, 0.8)
-    cone.BrickColor = BrickColor.new("Bright red")
+    cone.Name = "CoolieHat"
+    cone.Size = Vector3.new(1.0, 1.4, 1.0)
+    cone.BrickColor = BrickColor.new("Bright yellow")
     cone.Material = Enum.Material.SmoothPlastic
     cone.Shape = Enum.PartType.Cylinder
-    cone.CFrame = head.CFrame * CFrame.new(0, 2.2, 0)
+    cone.Position = head.Position + Vector3.new(0, 2.3, 0)
     cone.Parent = char
-    
-    -- ШАРИК НА КОНУСЕ
-    local ball = Instance.new("Part")
-    ball.Name = "ChinaHat"
-    ball.Size = Vector3.new(0.4, 0.4, 0.4)
-    ball.BrickColor = BrickColor.new("Bright yellow")
-    ball.Material = Enum.Material.Neon
-    ball.Shape = Enum.PartType.Ball
-    ball.CFrame = head.CFrame * CFrame.new(0, 2.8, 0)
-    ball.Parent = char
-    
-    -- ПРИВЯЗКА (Weld)
-    local function weld(part)
-        local w = Instance.new("Weld")
-        w.Parent = part
-        w.Part0 = part
-        w.Part1 = head
-        w.C0 = part.CFrame:inverse() * head.CFrame
+
+    -- 3. ВЕРХУШКА (закругление)
+    local tip = Instance.new("Part")
+    tip.Name = "CoolieHat"
+    tip.Size = Vector3.new(0.3, 0.3, 0.3)
+    tip.BrickColor = BrickColor.new("Bright yellow")
+    tip.Material = Enum.Material.SmoothPlastic
+    tip.Shape = Enum.PartType.Ball
+    tip.Position = head.Position + Vector3.new(0, 3.0, 0)
+    tip.Parent = char
+
+    -- 4. ПРИВЯЗКА К ГОЛОВЕ (через Weld)
+    local function weldHat(part)
+        local weld = Instance.new("Weld")
+        weld.Parent = part
+        weld.Part0 = part
+        weld.Part1 = head
+        weld.C0 = part.CFrame:inverse() * head.CFrame
     end
-    
-    weld(base)
-    weld(cone)
-    weld(ball)
+
+    weldHat(base)
+    weldHat(cone)
+    weldHat(tip)
+
+    print("✅ Китайская шляпа создана!")
 end
 
--- ВЫЗОВ
-createHat()
+-- ВЫЗЫВАЕМ ФУНКЦИЮ
+createCoolieHat()
