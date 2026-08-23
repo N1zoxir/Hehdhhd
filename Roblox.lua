@@ -1,4 +1,4 @@
--- [[ San Diego | Visual Hub (Smart Opening & Draggable) ]] --
+-- [[ San Diego | Visual Hub (Fixed & Draggable) ]] --
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
@@ -45,7 +45,7 @@ OpenStroke.Parent = OpenButton
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 0, 0, 0)
-MainFrame.Position = OpenButton.Position -- Открывается там же, где кнопка
+MainFrame.Position = UDim2.new(0.5, -220, 0.5, -160)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
 MainFrame.BorderSizePixel = 0
 MainFrame.Visible = false
@@ -345,7 +345,6 @@ end)
 -- ========================================================
 
 local function CloseMenu()
-    -- Перемещаем кнопку открытия на место закрывающегося меню
     OpenButton.Position = MainFrame.Position
 
     local tweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
@@ -366,7 +365,6 @@ end
 local function OpenMenu()
     if openDragging then return end
 
-    -- Перемещаем меню на место квадратика перед открытием
     MainFrame.Position = OpenButton.Position
 
     TweenService:Create(OpenButton, TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0)}):Play()
@@ -384,4 +382,4 @@ local function OpenMenu()
 end
 
 CloseBtn.MouseButton1Click:Connect(CloseMenu)
-OpenButton.MouseButton1Click:Connect(OpenMenu)t
+OpenButton.MouseButton1Click:Connect(OpenMenu)
