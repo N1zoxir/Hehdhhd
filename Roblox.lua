@@ -1,4 +1,4 @@
--- [[ San Diego | Visual Hub (Start Minimized & Draggable) ]] --
+-- [[ San Diego | Visual Hub (Smart Opening & Draggable) ]] --
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
@@ -19,14 +19,35 @@ ScreenGui.Parent = PlayerGui
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.ResetOnSpawn = false
 
--- Главное окно меню (Изначально скрыто / свернуто)
+-- Маленький квадрат (Кнопка открытия - появляется сразу)
+local OpenButton = Instance.new("TextButton")
+OpenButton.Name = "OpenButton"
+OpenButton.Size = UDim2.new(0, 45, 0, 45)
+OpenButton.Position = UDim2.new(0, 30, 0.5, -22)
+OpenButton.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+OpenButton.Text = "X"
+OpenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+OpenButton.TextSize = 16
+OpenButton.Font = Enum.Font.GothamBold
+OpenButton.Visible = true
+OpenButton.Parent = ScreenGui
+
+local OpenCorner = Instance.new("UICorner")
+OpenCorner.CornerRadius = UDim.new(0, 8)
+OpenCorner.Parent = OpenButton
+
+local OpenStroke = Instance.new("UIStroke")
+OpenStroke.Color = Color3.fromRGB(50, 50, 70)
+OpenStroke.Thickness = 1.5
+OpenStroke.Parent = OpenButton
+
+-- Главное окно меню (Изначально скрыто)
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 0, 0, 0)
-MainFrame.Position = UDim2.new(0.5, -220, 0.5, -160)
+MainFrame.Position = OpenButton.Position -- Открывается там же, где кнопка
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
 MainFrame.BorderSizePixel = 0
-MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 MainFrame.Visible = false
 MainFrame.BackgroundTransparency = 1
 MainFrame.Parent = ScreenGui
@@ -81,28 +102,6 @@ CloseBtn.TextColor3 = Color3.fromRGB(160, 160, 180)
 CloseBtn.TextSize = 16
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.Parent = TopBar
-
--- Маленький квадрат (Кнопка открытия - появляется сразу)
-local OpenButton = Instance.new("TextButton")
-OpenButton.Name = "OpenButton"
-OpenButton.Size = UDim2.new(0, 45, 0, 45)
-OpenButton.Position = UDim2.new(0, 30, 0.5, -22)
-OpenButton.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
-OpenButton.Text = "SD"
-OpenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-OpenButton.TextSize = 14
-OpenButton.Font = Enum.Font.GothamBold
-OpenButton.Visible = true
-OpenButton.Parent = ScreenGui
-
-local OpenCorner = Instance.new("UICorner")
-OpenCorner.CornerRadius = UDim.new(0, 8)
-OpenCorner.Parent = OpenButton
-
-local OpenStroke = Instance.new("UIStroke")
-OpenStroke.Color = Color3.fromRGB(50, 50, 70)
-OpenStroke.Thickness = 1.5
-OpenStroke.Parent = OpenButton
 
 -- Перетаскивание для Главного меню (MainFrame)
 local dragging, dragInput, dragStart, startPos
@@ -346,6 +345,9 @@ end)
 -- ========================================================
 
 local function CloseMenu()
+    -- Перемещаем кнопку открытия на место закрывающегося меню
+    OpenButton.Position = MainFrame.Position
+
     local tweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
     local tween = TweenService:Create(MainFrame, tweenInfo, {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1})
     tween:Play()
@@ -362,8 +364,10 @@ local function CloseMenu()
 end
 
 local function OpenMenu()
-    -- Проверяем, не перетаскивают ли кнопку в момент клика
     if openDragging then return end
+
+    -- Перемещаем меню на место квадратика перед открытием
+    MainFrame.Position = OpenButton.Position
 
     TweenService:Create(OpenButton, TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0)}):Play()
     task.wait(0.1)
@@ -380,4 +384,4 @@ local function OpenMenu()
 end
 
 CloseBtn.MouseButton1Click:Connect(CloseMenu)
-OpenButton.MouseButton1Click:Connect(OpenMenu)
+OpenButton.MouseButton1Click:Connect(OpenMenu)t
