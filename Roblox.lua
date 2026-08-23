@@ -1,12 +1,13 @@
--- [[ San Diego | Modern Visual Hub for Delta ]] --
+-- [[ San Diego | Adaptive & Draggable Visual Hub for Delta ]] --
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
+local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 
--- Защита от повторного запуска (удаляем старое меню, если уже открыто)
+-- Защита от повторного запуска
 if CoreGui:FindFirstChild("SanDiegoVisualsMenu") then
     CoreGui.SanDiegoVisualsMenu:Destroy()
 end
@@ -18,11 +19,13 @@ ScreenGui.Parent = CoreGui
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.ResetOnSpawn = false
 
--- Главное окно меню
+-- Главное окно меню (Адаптированное по размеру и центру)
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 480, 0, 340)
-MainFrame.Position = UDim2.new(0.5, -240, 0.5, -170)
+MainFrame.Size = UDim2.new(0.4, 0, 0.45, 0) -- Адаптивный размер в процентах от экрана
+MainFrame.MinSize = Vector2.new(420, 300) -- Минимальный размер, чтобы элементы не сжимались
+MainFrame.MaxSize = Vector2.new(550, 400) -- Максимальный размер
+MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
 MainFrame.BorderSizePixel = 0
 MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -37,7 +40,7 @@ UIStroke.Color = Color3.fromRGB(50, 50, 70)
 UIStroke.Thickness = 1.5
 UIStroke.Parent = MainFrame
 
--- Шапка окна
+-- Шапка окна (с поддержкой перетаскивания)
 local TopBar = Instance.new("Frame")
 TopBar.Size = UDim2.new(1, 0, 0, 45)
 TopBar.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
@@ -56,7 +59,7 @@ FixBar.BorderSizePixel = 0
 FixBar.Parent = TopBar
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -20, 1, 0)
+Title.Size = UDim2.new(1, -50, 1, 0)
 Title.Position = UDim2.new(0, 15, 0, 0)
 Title.BackgroundTransparency = 1
 Title.Text = "SAN DIEGO — Visuals Hub"
@@ -77,11 +80,11 @@ CloseBtn.TextSize = 16
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.Parent = TopBar
 
--- Маленький квадрат (кнопка открытия при свернутом меню)
+-- Маленький квадрат (кнопка открытия при свернутом меню) с возможностью перемещения
 local OpenButton = Instance.new("TextButton")
 OpenButton.Name = "OpenButton"
 OpenButton.Size = UDim2.new(0, 45, 0, 45)
-OpenButton.Position = UDim2.new(0, 20, 0.5, -22)
+OpenButton.Position = UDim2.new(0.05, 0, 0.5, 0)
 OpenButton.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
 OpenButton.Text = "SD"
 OpenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -98,6 +101,41 @@ local OpenStroke = Instance.new("UIStroke")
 OpenStroke.Color = Color3.fromRGB(50, 50, 70)
 OpenStroke.Thickness = 1.5
 OpenStroke.Parent = OpenButton
+
+-- Логика перетаскивания (Drag & Drop) для MainFrame
+local dragging, dragInput, dragStart, startPos
+
+TopBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+TopBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(
+            startPos.X.Scale, 
+            startPos.X.Offset + delta.X, 
+            startPos.Y.Scale, 
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
 
 -- Контейнер для прокрутки функций
 local ContentContainer = Instance.new("ScrollingFrame")
@@ -209,7 +247,7 @@ RunService.RenderStepped:Connect(function()
     if espEnabled then UpdateESP() end
 end)
 
--- 2. ESP Принтеров (Поиск объектов принтеров денег)
+-- 2. ESP Принтеров
 local printerEspEnabled = false
 local printerHighlights = {}
 
@@ -242,7 +280,7 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- 3. Night Mode (Ночной режим)
+-- 3. Night Mode (Ночь)
 CreateToggle("Night Mode (Ночь)", function(state)
     if state then
         Lighting.ClockTime = 0
@@ -255,7 +293,7 @@ CreateToggle("Night Mode (Ночь)", function(state)
     end
 end)
 
--- 4. Fullbright (Удаление теней)
+-- 4. Fullbright (Яркий свет)
 CreateToggle("Fullbright (Яркий свет)", function(state)
     if state then
         Lighting.GlobalShadows = false
@@ -297,9 +335,9 @@ local function OpenMenu()
     Title.TextTransparency = 0
     TopBar.BackgroundTransparency = 0
     
-    local openTween = TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 480, 0, 340), BackgroundTransparency = 0})
+    local openTween = TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0.4, 0, 0.45, 0), BackgroundTransparency = 0})
     openTween:Play()
 end
 
 CloseBtn.MouseButton1Click:Connect(CloseMenu)
-OpenButton.MouseButton1Click:Connect(OpenMenu)
+OpenButton.MouseButton1Click:Connect(OpenMenu)e
