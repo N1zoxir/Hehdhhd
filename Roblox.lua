@@ -340,4 +340,4 @@ local function OpenMenu()
 end
 
 CloseBtn.MouseButton1Click:Connect(CloseMenu)
-OpenButton.MouseButton1Click:Connect(OpenMenu)e
+OpenButton.MouseButton1Click:Connect(OpenMenu)
