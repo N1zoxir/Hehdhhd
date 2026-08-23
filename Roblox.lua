@@ -1,6 +1,4 @@
--- N1zoxir Visuals ONLY v2.0 [NO CHEATS, ONLY VISUALS]
--- Только визуальные эффекты, без читов!
-
+-- N1zoxir FULL VISUAL PACK v4.0 [ВСЕ ТОГГЛЫ]
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -20,8 +18,10 @@ local settings = {
 local trailParts = {}
 local espObjects = {}
 local hatParts = {}
+local rainbowConnection = nil
+local trailConnection = nil
 
--- ======== ТОЛЬКО ВИЗУАЛЫ ========
+-- ======== ТОГГЛЫ ========
 local function toggleESP()
     settings.esp = not settings.esp
     if settings.esp then
@@ -73,30 +73,34 @@ local function toggleHat()
     if not head then return end
     settings.hat = not settings.hat
     if settings.hat then
+        -- Основание
         local hat = Instance.new("Part")
-        hat.Size = Vector3.new(2, 0.3, 2)
+        hat.Size = Vector3.new(2.2, 0.3, 2.2)
         hat.BrickColor = BrickColor.new("Really red")
         hat.Material = Enum.Material.Neon
         hat.Shape = Enum.PartType.Cylinder
         hat.Position = head.Position + Vector3.new(0, 1.5, 0)
         hat.Parent = char
         
+        -- Конус
         local cone = Instance.new("Part")
-        cone.Size = Vector3.new(0.6, 1, 0.6)
+        cone.Size = Vector3.new(0.7, 1.2, 0.7)
         cone.BrickColor = BrickColor.new("Really red")
         cone.Material = Enum.Material.Neon
         cone.Shape = Enum.PartType.Cylinder
-        cone.Position = hat.Position + Vector3.new(0, 0.6, 0)
+        cone.Position = hat.Position + Vector3.new(0, 0.7, 0)
         cone.Parent = char
         
+        -- Шарик
         local ball = Instance.new("Part")
-        ball.Size = Vector3.new(0.3, 0.3, 0.3)
+        ball.Size = Vector3.new(0.4, 0.4, 0.4)
         ball.BrickColor = BrickColor.new("Bright yellow")
         ball.Material = Enum.Material.Neon
         ball.Shape = Enum.PartType.Ball
-        ball.Position = cone.Position + Vector3.new(0, 0.6, 0)
+        ball.Position = cone.Position + Vector3.new(0, 0.8, 0)
         ball.Parent = char
         
+        -- Привязка
         local weld = Instance.new("Weld")
         weld.Parent = hat
         weld.Part0 = hat
@@ -127,7 +131,8 @@ end
 local function toggleTrail()
     settings.trail = not settings.trail
     if settings.trail then
-        RunService.Heartbeat:Connect(function()
+        if trailConnection then trailConnection:Disconnect() end
+        trailConnection = RunService.Heartbeat:Connect(function()
             if not settings.trail then return end
             local char = Player.Character
             if not char then return end
@@ -136,7 +141,7 @@ local function toggleTrail()
             
             local trail = Instance.new("Part")
             trail.Size = Vector3.new(0.5, 0.5, 0.5)
-            trail.BrickColor = BrickColor.new("Bright cyan")
+            trail.BrickColor = BrickColor.new(Color3.fromHSV(math.random(), 1, 1))
             trail.Material = Enum.Material.Neon
             trail.CFrame = root.CFrame
             trail.Anchored = true
@@ -146,13 +151,17 @@ local function toggleTrail()
             
             table.insert(trailParts, trail)
             
-            if #trailParts > 100 then
+            if #trailParts > 150 then
                 local old = trailParts[1]
                 if old then old:Destroy() end
                 table.remove(trailParts, 1)
             end
         end)
     else
+        if trailConnection then
+            trailConnection:Disconnect()
+            trailConnection = nil
+        end
         for _, part in pairs(trailParts) do
             if part then part:Destroy() end
         end
@@ -163,16 +172,32 @@ end
 local function toggleRainbow()
     settings.rainbow = not settings.rainbow
     if settings.rainbow then
-        RunService.Heartbeat:Connect(function()
+        if rainbowConnection then rainbowConnection:Disconnect() end
+        rainbowConnection = RunService.Heartbeat:Connect(function()
             if not settings.rainbow then return end
             local char = Player.Character
             if not char then return end
             for _, part in pairs(char:GetDescendants()) do
                 if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
                     part.BrickColor = BrickColor.new(Color3.fromHSV(tick() % 5 / 5, 1, 1))
+                    part.Material = Enum.Material.Neon
                 end
             end
         end)
+    else
+        if rainbowConnection then
+            rainbowConnection:Disconnect()
+            rainbowConnection = nil
+        end
+        local char = Player.Character
+        if char then
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.BrickColor = BrickColor.new("White")
+                    part.Material = Enum.Material.Plastic
+                end
+            end
+        end
     end
 end
 
@@ -186,7 +211,7 @@ local function toggleSize()
     root.Size = Vector3.new(2 * scale, 1 * scale, 1 * scale)
 end
 
--- ======== МЕНЮ С ДИЗАЙНОМ ========
+-- ======== МЕНЮ ========
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = game.CoreGui
 ScreenGui.Name = "N1zoxirVisuals"
@@ -215,7 +240,7 @@ local Title = Instance.new("TextLabel")
 Title.Parent = Header
 Title.BackgroundTransparency = 1
 Title.Size = UDim2.new(1, 0, 1, 0)
-Title.Text = "N1zoxir Visuals ONLY"
+Title.Text = "N1zoxir Visuals PRO"
 Title.TextColor3 = Color3.fromRGB(0, 200, 255)
 Title.TextSize = 22
 Title.Font = Enum.Font.GothamBold
@@ -244,11 +269,11 @@ createButton("👁️ ESP (обводка)", y, Color3.fromRGB(0, 200, 200), tog
 y = y + 50
 createButton("🌙 Ночной режим", y, Color3.fromRGB(100, 50, 200), toggleNight)
 y = y + 50
-createButton("🐉 Китайская шляпа", y, Color3.fromRGB(255, 50, 50), toggleHat)
+createButton("🐉 Неоновая шляпа", y, Color3.fromRGB(255, 50, 50), toggleHat)
 y = y + 50
-createButton("✨ Следы (трейл)", y, Color3.fromRGB(200, 0, 255), toggleTrail)
+createButton("✨ Радужный след", y, Color3.fromRGB(200, 0, 255), toggleTrail)
 y = y + 50
-createButton("🌈 Радуга", y, Color3.fromRGB(255, 200, 0), toggleRainbow)
+createButton("🌈 Радуга на игроке", y, Color3.fromRGB(255, 200, 0), toggleRainbow)
 y = y + 50
 createButton("📏 Увеличение", y, Color3.fromRGB(255, 100, 0), toggleSize)
 
@@ -268,5 +293,5 @@ CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
-print("✅ N1zoxir Visuals ONLY загружен!")
-print("🎨 Только визуалы, без читов!")
+print("✅ N1zoxir Visuals PRO загружен!")
+print("🔥 Все функции включаются и выключаются!")
