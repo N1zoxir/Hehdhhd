@@ -1,5 +1,6 @@
--- N1zoxir FULL VISUAL PACK v8.0 [КИТАЙСКАЯ ШЛЯПА ИСПРАВЛЕНА]
--- Все функции: ESP, Night, Hat, Trail, Rainbow, Size, Pentagram, Zone Flow, Target Strafe, AntiFling, Speed, Noclip, Infinite Jump, AntiAFK, AntiKick, Shader, Weather, Plush, TimeLock, ESP Tracers, Name Tags, Box ESP
+-- N1zoxir ULTRA VISUAL v9.0 [FPS/PING + НОВЫЙ ДИЗАЙН]
+-- Все функции: ESP, Night, Trail, Rainbow, Size, FPS/Ping
+-- Меню с прокруткой, перетаскиванием, сворачиванием
 
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
@@ -7,94 +8,26 @@ local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local UIS = UserInputService
+local Stats = game:GetService("Stats")
 
--- ======== НАСТРОЙКИ ========
+-- ======== ПЕРЕМЕННЫЕ ========
 local settings = {
     esp = false,
     night = false,
-    hat = false,
     trail = false,
     rainbow = false,
-    size = false
+    size = false,
+    showStats = false
 }
 
 local trailParts = {}
 local espObjects = {}
-local hatParts = {}
 local rainbowConnection = nil
 local trailConnection = nil
-local sizeConnection = nil
+local statLabel = nil
+local statConnection = nil
 
--- ======== НОВАЯ КИТАЙСКАЯ ШЛЯПА (ИСПРАВЛЕННАЯ) ========
-local function toggleHat()
-    settings.hat = not settings.hat
-    local char = Player.Character
-    if not char then return end
-    local head = char:FindFirstChild("Head")
-    if not head then return end
-
-    if settings.hat then
-        -- Удаляем старую шляпу, если была
-        for _, obj in pairs(hatParts) do
-            if obj then obj:Destroy() end
-        end
-        hatParts = {}
-
-        -- 1. ОСНОВАНИЕ (широкий круг)
-        local base = Instance.new("Part")
-        base.Name = "ChinaHat"
-        base.Size = Vector3.new(2.4, 0.15, 2.4)
-        base.BrickColor = BrickColor.new("Bright yellow") -- цвет соломы
-        base.Material = Enum.Material.SmoothPlastic
-        base.Shape = Enum.PartType.Cylinder
-        base.Position = head.Position + Vector3.new(0, 1.5, 0)
-        base.Parent = char
-
-        -- 2. КОНУС (основная часть)
-        local cone = Instance.new("Part")
-        cone.Name = "ChinaHat"
-        cone.Size = Vector3.new(1.0, 1.4, 1.0)
-        cone.BrickColor = BrickColor.new("Bright yellow")
-        cone.Material = Enum.Material.SmoothPlastic
-        cone.Shape = Enum.PartType.Cylinder
-        cone.Position = head.Position + Vector3.new(0, 2.3, 0)
-        cone.Parent = char
-
-        -- 3. ВЕРХУШКА (шарик)
-        local tip = Instance.new("Part")
-        tip.Name = "ChinaHat"
-        tip.Size = Vector3.new(0.3, 0.3, 0.3)
-        tip.BrickColor = BrickColor.new("Bright yellow")
-        tip.Material = Enum.Material.SmoothPlastic
-        tip.Shape = Enum.PartType.Ball
-        tip.Position = head.Position + Vector3.new(0, 3.0, 0)
-        tip.Parent = char
-
-        -- 4. ПРИВЯЗКА К ГОЛОВЕ (Weld)
-        local function weldHat(part)
-            local weld = Instance.new("Weld")
-            weld.Parent = part
-            weld.Part0 = part
-            weld.Part1 = head
-            weld.C0 = part.CFrame:inverse() * head.CFrame
-        end
-        weldHat(base)
-        weldHat(cone)
-        weldHat(tip)
-
-        hatParts = {base, cone, tip}
-        print("✅ Китайская шляпа надета")
-    else
-        for _, obj in pairs(hatParts) do
-            if obj then obj:Destroy() end
-        end
-        hatParts = {}
-        print("✅ Китайская шляпа снята")
-    end
-end
-
--- ======== ОСТАЛЬНЫЕ ФУНКЦИИ (ESP, NIGHT, TRAIL, RAINBOW, SIZE) ========
+-- ======== ФУНКЦИИ (ESP, NIGHT, TRAIL, RAINBOW, SIZE) ========
 local function toggleESP()
     settings.esp = not settings.esp
     if settings.esp then
@@ -107,7 +40,7 @@ local function toggleESP()
                     esp.Adornee = char
                     esp.Size = Vector3.new(5, 6, 3)
                     esp.Color3 = Color3.fromRGB(0, 255, 255)
-                    esp.Transparency = 0.4
+                    esp.Transparency = 0.3
                     esp.ZIndex = 10
                     esp.AlwaysOnTop = true
                     espObjects[player] = esp
@@ -211,88 +144,214 @@ local function toggleSize()
     root.Size = Vector3.new(2 * scale, 1 * scale, 1 * scale)
 end
 
--- ======== GUI (МЕНЮ) ========
+-- ======== FPS / PING (НОВАЯ ФУНКЦИЯ) ========
+local function toggleStats()
+    settings.showStats = not settings.showStats
+    if settings.showStats then
+        if not statLabel then
+            local sg = Instance.new("ScreenGui")
+            sg.Name = "N1zoxirStats"
+            sg.Parent = Player.PlayerGui
+            sg.ResetOnSpawn = false
+            statLabel = Instance.new("TextLabel", sg)
+            statLabel.Size = UDim2.new(0, 200, 0, 40)
+            statLabel.Position = UDim2.new(0.02, 0, 0.02, 0)
+            statLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+            statLabel.BackgroundTransparency = 0.5
+            statLabel.TextColor3 = Color3.fromRGB(0, 255, 255)
+            statLabel.TextSize = 18
+            statLabel.Font = Enum.Font.GothamBold
+            statLabel.Text = "FPS: 0 | Ping: 0ms"
+            statLabel.TextXAlignment = Enum.TextXAlignment.Left
+            statLabel.BorderSizePixel = 0
+            statLabel.ZIndex = 10
+            local corner = Instance.new("UICorner", statLabel)
+            corner.CornerRadius = UDim.new(0, 8)
+        end
+        if statConnection then statConnection:Disconnect() end
+        statConnection = RunService.RenderStepped:Connect(function()
+            local fps = math.floor(1 / RunService.RenderStepped:Wait())
+            local ping = Stats.Network:GetAveragePing() * 1000
+            statLabel.Text = string.format("⚡ FPS: %d  |  📶 Ping: %.0fms", fps, ping)
+        end)
+    else
+        if statConnection then statConnection:Disconnect() statConnection = nil end
+        if statLabel then
+            local sg = statLabel.Parent
+            if sg then sg:Destroy() end
+            statLabel = nil
+        end
+    end
+end
+
+-- ======== ГЛАВНОЕ МЕНЮ (НОВЫЙ ДИЗАЙН) ========
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = game.CoreGui
-ScreenGui.Name = "N1zoxirVisuals"
+ScreenGui.Name = "N1zoxirGUI"
 ScreenGui.ResetOnSpawn = false
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 25)
+MainFrame.BackgroundColor3 = Color3.fromRGB(8, 8, 20)
 MainFrame.BackgroundTransparency = 0.1
-MainFrame.BorderSizePixel = 3
-MainFrame.BorderColor3 = Color3.fromRGB(0, 200, 255)
-MainFrame.Position = UDim2.new(0.5, -200, 0.5, -250)
-MainFrame.Size = UDim2.new(0, 400, 0, 450)
+MainFrame.BorderSizePixel = 2
+MainFrame.BorderColor3 = Color3.fromRGB(0, 180, 255)
+MainFrame.Position = UDim2.new(0.5, -210, 0.5, -280)
+MainFrame.Size = UDim2.new(0, 420, 0, 560)
 MainFrame.Active = true
 MainFrame.Draggable = true
+MainFrame.ClipsDescendants = true
+-- Скругление углов
+local mainCorner = Instance.new("UICorner", MainFrame)
+mainCorner.CornerRadius = UDim.new(0, 12)
 
 -- Заголовок
 local Header = Instance.new("Frame")
 Header.Parent = MainFrame
-Header.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+Header.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
 Header.BackgroundTransparency = 0.2
-Header.Size = UDim2.new(1, 0, 0, 50)
+Header.Size = UDim2.new(1, 0, 0, 55)
 Header.Position = UDim2.new(0, 0, 0, 0)
 
 local Title = Instance.new("TextLabel")
 Title.Parent = Header
 Title.BackgroundTransparency = 1
-Title.Size = UDim2.new(1, 0, 1, 0)
-Title.Text = "N1zoxir Visuals PRO"
-Title.TextColor3 = Color3.fromRGB(0, 200, 255)
+Title.Size = UDim2.new(0.7, 0, 1, 0)
+Title.Position = UDim2.new(0.05, 0, 0, 0)
+Title.Text = "⚡ N1zoxir PRO"
+Title.TextColor3 = Color3.fromRGB(0, 180, 255)
 Title.TextSize = 22
 Title.Font = Enum.Font.GothamBold
-Title.TextScaled = true
+Title.TextXAlignment = Enum.TextXAlignment.Left
 
--- Кнопка закрытия (крестик)
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Parent = Header
-CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-CloseBtn.Size = UDim2.new(0, 35, 0, 35)
-CloseBtn.Position = UDim2.new(1, -40, 0, 7)
-CloseBtn.Text = "X"
-CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.TextSize = 20
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.BorderSizePixel = 0
-CloseBtn.MouseButton1Click:Connect(function()
-    MainFrame:Destroy()
-    ScreenGui:Destroy()
-end)
+-- Кнопка сворачивания (в иконку)
+local MinimizeBtn = Instance.new("TextButton")
+MinimizeBtn.Parent = Header
+MinimizeBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+MinimizeBtn.Size = UDim2.new(0, 35, 0, 35)
+MinimizeBtn.Position = UDim2.new(1, -45, 0, 10)
+MinimizeBtn.Text = "_"
+MinimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeBtn.TextSize = 24
+MinimizeBtn.Font = Enum.Font.GothamBold
+MinimizeBtn.BorderSizePixel = 0
+local minCorner = Instance.new("UICorner", MinimizeBtn)
+minCorner.CornerRadius = UDim.new(0, 6)
 
--- Функция создания кнопок
+-- Контейнер с прокруткой
+local ScrollContainer = Instance.new("ScrollingFrame")
+ScrollContainer.Parent = MainFrame
+ScrollContainer.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ScrollContainer.BackgroundTransparency = 1
+ScrollContainer.Size = UDim2.new(1, 0, 1, -55)
+ScrollContainer.Position = UDim2.new(0, 0, 0, 55)
+ScrollContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+ScrollContainer.ScrollBarThickness = 6
+ScrollContainer.ScrollBarImageColor3 = Color3.fromRGB(0, 180, 255)
+ScrollContainer.ScrollBarImageTransparency = 0.5
+ScrollContainer.BorderSizePixel = 0
+
+-- Функция создания кнопки с новым дизайном
 local function createButton(text, yPos, color, callback)
     local btn = Instance.new("TextButton")
-    btn.Parent = MainFrame
+    btn.Parent = ScrollContainer
     btn.BackgroundColor3 = color or Color3.fromRGB(20, 20, 40)
-    btn.BackgroundTransparency = 0.2
-    btn.Size = UDim2.new(0.8, 0, 0, 40)
-    btn.Position = UDim2.new(0.1, 0, 0, yPos)
+    btn.BackgroundTransparency = 0.15
+    btn.Size = UDim2.new(0.88, 0, 0, 50)
+    btn.Position = UDim2.new(0.06, 0, 0, yPos)
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 16
+    btn.TextSize = 17
     btn.Font = Enum.Font.GothamBold
-    btn.BorderSizePixel = 2
-    btn.BorderColor3 = Color3.fromRGB(0, 200, 255)
+    btn.BorderSizePixel = 0
+    -- Скругление кнопок
+    local corner = Instance.new("UICorner", btn)
+    corner.CornerRadius = UDim.new(0, 10)
+    -- Тень
+    local shadow = Instance.new("UIStroke", btn)
+    shadow.Color = Color3.fromRGB(0, 180, 255)
+    shadow.Thickness = 1.5
+    shadow.Transparency = 0.3
+    -- Анимация при наведении (для ПК) и нажатии
+    btn.MouseEnter:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundTransparency = 0.3}):Play()
+    end)
+    btn.MouseLeave:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundTransparency = 0.15}):Play()
+    end)
     btn.MouseButton1Click:Connect(callback)
     return btn
 end
 
--- Кнопки меню
-local y = 65
+-- Заполняем кнопки
+local y = 10
 createButton("👁️ ESP (обводка)", y, Color3.fromRGB(0, 200, 200), toggleESP)
-y = y + 50
+y = y + 55
 createButton("🌙 Ночной режим", y, Color3.fromRGB(100, 50, 200), toggleNight)
-y = y + 50
-createButton("🐉 КИТАЙСКАЯ ШЛЯПА (новая)", y, Color3.fromRGB(255, 50, 50), toggleHat)
-y = y + 50
+y = y + 55
 createButton("✨ Радужный след", y, Color3.fromRGB(200, 0, 255), toggleTrail)
-y = y + 50
+y = y + 55
 createButton("🌈 Радуга на игроке", y, Color3.fromRGB(255, 200, 0), toggleRainbow)
-y = y + 50
-createButton("📏 Увеличение", y, Color3.fromRGB(255, 100, 0), toggleSize)
+y = y + 55
+createButton("📏 Увеличение (x5)", y, Color3.fromRGB(255, 100, 0), toggleSize)
+y = y + 55
+createButton("📊 FPS / Ping (показ)", y, Color3.fromRGB(0, 255, 128), toggleStats)
 
-print("✅ N1zoxir Visuals PRO v8.0 загружен!")
-print("🔥 Китайская шляпа исправлена и работает!")
+ScrollContainer.CanvasSize = UDim2.new(0, 0, 0, y + 20)
+
+-- ======== МИНИ-ИКОНКА (ПРИ СВОРАЧИВАНИИ) ========
+local MiniIcon = Instance.new("ImageButton")
+MiniIcon.Parent = ScreenGui
+MiniIcon.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+MiniIcon.BackgroundTransparency = 0.2
+MiniIcon.Size = UDim2.new(0, 55, 0, 55)
+MiniIcon.Position = UDim2.new(0.02, 0, 0.85, 0)
+MiniIcon.Image = "rbxassetid://6031098377"
+MiniIcon.BorderSizePixel = 2
+MiniIcon.BorderColor3 = Color3.fromRGB(0, 180, 255)
+MiniIcon.Visible = false
+local miniCorner = Instance.new("UICorner", MiniIcon)
+miniCorner.CornerRadius = UDim.new(1, 0)
+
+MinimizeBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+    MiniIcon.Visible = true
+end)
+
+MiniIcon.MouseButton1Click:Connect(function()
+    MainFrame.Visible = true
+    MiniIcon.Visible = false
+end)
+
+-- ======== ПЕРЕТАСКИВАНИЕ (ДЛЯ ТЕЛЕФОНА) ========
+local drag = false
+local dragStart = nil
+local startPos = nil
+
+MainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        drag = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+    end
+end)
+
+MainFrame.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        drag = false
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if drag and input.UserInputType == Enum.UserInputType.Touch then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+print("✅ N1zoxir PRO v9.0 загружен! (FPS/Ping, новый дизайн)")
