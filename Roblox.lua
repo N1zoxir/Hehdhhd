@@ -1,28 +1,42 @@
--- [[ San Diego | Visual Hub (Fixed UI Loading) ]] --
+-- [[ San Diego | Visual Hub (Full Features + Universal GUI) ]] --
 task.spawn(function()
     local Players = game:GetService("Players")
     local TweenService = game:GetService("TweenService")
     local RunService = game:GetService("RunService")
     local Lighting = game:GetService("Lighting")
     local UserInputService = game:GetService("UserInputService")
+    local CoreGui = game:GetService("CoreGui")
     local LocalPlayer = Players.LocalPlayer
-    local PlayerGui = LocalPlayer:WaitForChild("PlayerGui", 10)
 
-    if not PlayerGui then return end
+    -- Универсальный поиск контейнера для Delta / Roblox
+    local guiParent = nil
+    if gethui then
+        local success, res = pcall(gethui)
+        if success and res then guiParent = res end
+    end
+    if not guiParent then
+        local success, res = pcall(function() return CoreGui end)
+        if success and res then guiParent = res end
+    end
+    if not guiParent then
+        guiParent = LocalPlayer:WaitForChild("PlayerGui", 10)
+    end
 
-    -- Защита от повторного запуска
-    if PlayerGui:FindFirstChild("SanDiegoVisualsMenu") then
-        PlayerGui.SanDiegoVisualsMenu:Destroy()
+    if not guiParent then return end
+
+    -- Защита от дубликатов
+    if guiParent:FindFirstChild("SanDiegoVisualsMenu") then
+        guiParent.SanDiegoVisualsMenu:Destroy()
     end
 
     -- Главный контейнер
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "SanDiegoVisualsMenu"
-    ScreenGui.Parent = PlayerGui
+    ScreenGui.Parent = guiParent
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.ResetOnSpawn = false
 
-    -- Маленький квадрат (Кнопка открытия - появляется сразу)
+    -- Кнопка открытия (Маленький квадрат "X")
     local OpenButton = Instance.new("TextButton")
     OpenButton.Name = "OpenButton"
     OpenButton.Size = UDim2.new(0, 45, 0, 45)
@@ -40,7 +54,7 @@ task.spawn(function()
     OpenCorner.Parent = OpenButton
 
     local OpenStroke = Instance.new("UIStroke")
-    OpenStroke.Color = Color3.fromRGB(50, 50, 70)
+    OpenStroke.Color = Color3.fromRGB(0, 170, 255)
     OpenStroke.Thickness = 1.5
     OpenStroke.Parent = OpenButton
 
@@ -64,7 +78,7 @@ task.spawn(function()
     UIStroke.Thickness = 1.5
     UIStroke.Parent = MainFrame
 
-    -- Шапка окна (с поддержкой перетаскивания)
+    -- Шапка окна (с перетаскиванием)
     local TopBar = Instance.new("Frame")
     TopBar.Size = UDim2.new(1, 0, 0, 45)
     TopBar.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
@@ -95,7 +109,7 @@ task.spawn(function()
     Title.TextTransparency = 1
     Title.Parent = TopBar
 
-    -- Кнопка закрытия (крестик)
+    -- Кнопка закрытия
     local CloseBtn = Instance.new("TextButton")
     CloseBtn.Size = UDim2.new(0, 30, 0, 30)
     CloseBtn.Position = UDim2.new(1, -38, 0.5, -15)
@@ -106,77 +120,55 @@ task.spawn(function()
     CloseBtn.Font = Enum.Font.GothamBold
     CloseBtn.Parent = TopBar
 
-    -- Перетаскивание для Главного меню (MainFrame)
+    -- Перетаскивание главного окна
     local dragging, dragInput, dragStart, startPos
-
     TopBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
             startPos = MainFrame.Position
-            
             input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
             end)
         end
     end)
-
     TopBar.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
             dragInput = input
         end
     end)
-
     UserInputService.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             local delta = input.Position - dragStart
-            MainFrame.Position = UDim2.new(
-                startPos.X.Scale, 
-                startPos.X.Offset + delta.X, 
-                startPos.Y.Scale, 
-                startPos.Y.Offset + delta.Y
-            )
+            MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
 
-    -- Перетаскивание для маленькой кнопки (OpenButton)
+    -- Перетаскивание кнопки "X"
     local openDragging, openDragInput, openDragStart, openStartPos
-
     OpenButton.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             openDragging = true
             openDragStart = input.Position
             openStartPos = OpenButton.Position
-            
             input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    openDragging = false
-                end
+                if input.UserInputState == Enum.UserInputState.End then openDragging = false end
             end)
         end
     end)
-
     OpenButton.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
             openDragInput = input
         end
     end)
-
     UserInputService.InputChanged:Connect(function(input)
         if input == openDragInput and openDragging then
             local delta = input.Position - openDragStart
-            OpenButton.Position = UDim2.new(
-                openStartPos.X.Scale, 
-                openStartPos.X.Offset + delta.X, 
-                openStartPos.Y.Scale, 
-                openStartPos.Y.Offset + delta.Y
-            )
+            OpenButton.Position = UDim2.new(openStartPos.X.Scale, openStartPos.X.Offset + delta.X, openStartPos.Y.Scale, openStartPos.Y.Offset + delta.Y)
         end
     end)
 
-    -- Контейнер для прокрутки функций
+    -- Контейнер для функций (Список)
     local ContentContainer = Instance.new("ScrollingFrame")
     ContentContainer.Size = UDim2.new(1, -20, 1, -60)
     ContentContainer.Position = UDim2.new(0, 10, 0, 50)
@@ -192,7 +184,7 @@ task.spawn(function()
     UIList.Padding = UDim.new(0, 8)
     UIList.Parent = ContentContainer
 
-    -- Функция генерации переключателей
+    -- Функция создания переключателей
     local function CreateToggle(name, callback)
         local ToggleFrame = Instance.new("Frame")
         ToggleFrame.Size = UDim2.new(1, 0, 0, 40)
@@ -251,15 +243,26 @@ task.spawn(function()
     end
 
     -- ========================================================
-    -- ФУНКЦИОНАЛ ВИЗУАЛОВ
+    -- ВСЕ ФУНКЦИОНАЛЬНЫЕ ВИЗУАЛЫ
     -- ========================================================
 
     -- 1. ESP Игроков
     local espEnabled = false
-    local function UpdateESP()
-        for _, player in ipairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character then
-                if espEnabled then
+    CreateToggle("ESP Игроков", function(state)
+        espEnabled = state
+        if not espEnabled then
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player.Character and player.Character:FindFirstChild("SD_PlayerESP") then
+                    player.Character.SD_PlayerESP:Destroy()
+                end
+            end
+        end
+    end)
+
+    RunService.RenderStepped:Connect(function()
+        if espEnabled then
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and player.Character then
                     if not player.Character:FindFirstChild("SD_PlayerESP") then
                         local hl = Instance.new("Highlight")
                         hl.Name = "SD_PlayerESP"
@@ -269,27 +272,14 @@ task.spawn(function()
                         hl.FillTransparency = 0.5
                         hl.Parent = player.Character
                     end
-                else
-                    if player.Character:FindFirstChild("SD_PlayerESP") then
-                        player.Character.SD_PlayerESP:Destroy()
-                    end
                 end
             end
         end
-    end
-
-    CreateToggle("ESP Игроков", function(state)
-        espEnabled = state
-    end)
-
-    RunService.RenderStepped:Connect(function()
-        if espEnabled then UpdateESP() end
     end)
 
     -- 2. ESP Принтеров
     local printerEspEnabled = false
     local printerHighlights = {}
-
     CreateToggle("ESP Принтеров (Деньги)", function(state)
         printerEspEnabled = state
         if not printerEspEnabled then
@@ -344,46 +334,35 @@ task.spawn(function()
     end)
 
     -- ========================================================
-    -- АНИМАЦИИ ОТКРЫТИЯ / ЗАКРЫТИЯ
+    -- АНИМАЦИИ ОТКРЫТИЯ / ЗАКРЫТИЯ МЕНЮ
     -- ========================================================
 
     local function CloseMenu()
         OpenButton.Position = MainFrame.Position
-
-        local tweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-        local tween = TweenService:Create(MainFrame, tweenInfo, {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1})
+        local tween = TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1})
         tween:Play()
-        
         Title.TextTransparency = 1
         TopBar.BackgroundTransparency = 1
-        
         tween.Completed:Wait()
         MainFrame.Visible = false
         OpenButton.Visible = true
-        
         OpenButton.Size = UDim2.new(0, 0, 0, 0)
-        TweenService:Create(OpenButton, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 45, 0, 45)}):Play()
+        TweenService:Create(OpenButton, TweenInfo.new(0.2, Enum.EasingStyle.Back), {Size = UDim2.new(0, 45, 0, 45)}):Play()
     end
 
     local function OpenMenu()
         if openDragging then return end
-
         MainFrame.Position = OpenButton.Position
-
-        TweenService:Create(OpenButton, TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0)}):Play()
+        TweenService:Create(OpenButton, TweenInfo.new(0.15), {Size = UDim2.new(0, 0, 0, 0)}):Play()
         task.wait(0.1)
-        
         OpenButton.Visible = false
         MainFrame.Visible = true
         MainFrame.Size = UDim2.new(0, 0, 0, 0)
-        
         Title.TextTransparency = 0
         TopBar.BackgroundTransparency = 0
-        
-        local openTween = TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 440, 0, 320), BackgroundTransparency = 0})
-        openTween:Play()
+        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Back), {Size = UDim2.new(0, 440, 0, 320), BackgroundTransparency = 0}):Play()
     end
 
     CloseBtn.MouseButton1Click:Connect(CloseMenu)
     OpenButton.MouseButton1Click:Connect(OpenMenu)
-end)e
+end)
