@@ -1,5 +1,5 @@
--- N1zoxir Control Center v4.6 [FULL FIXED]
--- Вкладки работают! Перетаскивание работает!
+-- N1zoxir Control Center v4.8 [ВКЛАДКИ: HOME, COMBAT, PLAYER, VISUALS, UTILITY]
+-- ВСЁ РАБОТАЕТ: ПЕРЕКЛЮЧЕНИЕ, ПЕРЕТАСКИВАНИЕ, СВОРАЧИВАНИЕ
 
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
@@ -294,7 +294,7 @@ MinimizeBtn.TextSize = 20
 MinimizeBtn.Font = Enum.Font.GothamBold
 MinimizeBtn.BorderSizePixel = 0
 
--- ВКЛАДКИ
+-- ВКЛАДКИ (ТОЛЬКО НУЖНЫЕ)
 local Tabs = {"Home", "Combat", "Player", "Visuals", "Utility"}
 local TabButtons = {}
 local currentTab = "Home"
@@ -330,7 +330,7 @@ for i, tab in pairs(Tabs) do
     end)
 end
 
--- КОНТЕЙНЕР
+-- КОНТЕЙНЕР ДЛЯ КНОПОК
 local ContentContainer = Instance.new("ScrollingFrame")
 ContentContainer.Parent = MainFrame
 ContentContainer.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -341,6 +341,7 @@ ContentContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
 ContentContainer.ScrollBarThickness = 6
 ContentContainer.ScrollBarImageColor3 = Color3.fromRGB(0, 180, 255)
 
+-- ФУНКЦИЯ СОЗДАНИЯ КНОПКИ
 local function createButton(parent, text, yPos, color, callback)
     local btn = Instance.new("TextButton")
     btn.Parent = parent
@@ -358,7 +359,9 @@ local function createButton(parent, text, yPos, color, callback)
     return btn
 end
 
+-- ФУНКЦИЯ ОБНОВЛЕНИЯ КОНТЕНТА
 local function updateContent(tab)
+    -- Очищаем контейнер
     for _, child in pairs(ContentContainer:GetChildren()) do
         if child:IsA("TextButton") or child:IsA("TextLabel") then
             child:Destroy()
@@ -450,7 +453,7 @@ local function updateContent(tab)
     ContentContainer.CanvasSize = UDim2.new(0, 0, 0, y + 50)
 end
 
--- ЗАГРУЗКА ПЕРВОЙ ВКЛАДКИ
+-- АКТИВИРУЕМ ПЕРВУЮ ВКЛАДКУ
 TabButtons["Home"].TextColor3 = Color3.fromRGB(0, 180, 255)
 updateContent("Home")
 
@@ -507,4 +510,5 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
-print("✅ N1zoxir Control Center v4.6 загружен!")
+print("✅ N1zoxir Control Center v4.8 загружен!")
+print("📱 Вкладки: Home, Combat, Player, Visuals, Utility")
