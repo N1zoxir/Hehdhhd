@@ -1,31 +1,29 @@
--- [[ San Diego | Adaptive & Draggable Visual Hub for Delta ]] --
+-- [[ San Diego | Adaptive & Draggable Visual Hub (PlayerGui Fix) ]] --
 local Players = game:GetService("Players")
-local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 -- Защита от повторного запуска
-if CoreGui:FindFirstChild("SanDiegoVisualsMenu") then
-    CoreGui.SanDiegoVisualsMenu:Destroy()
+if PlayerGui:FindFirstChild("SanDiegoVisualsMenu") then
+    PlayerGui.SanDiegoVisualsMenu:Destroy()
 end
 
 -- Главный контейнер
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "SanDiegoVisualsMenu"
-ScreenGui.Parent = CoreGui
+ScreenGui.Parent = PlayerGui
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.ResetOnSpawn = false
 
--- Главное окно меню (Адаптированное по размеру и центру)
+-- Главное окно меню (Адаптированное)
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0.4, 0, 0.45, 0) -- Адаптивный размер в процентах от экрана
-MainFrame.MinSize = Vector2.new(420, 300) -- Минимальный размер, чтобы элементы не сжимались
-MainFrame.MaxSize = Vector2.new(550, 400) -- Максимальный размер
-MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+MainFrame.Size = UDim2.new(0, 440, 0, 320)
+MainFrame.Position = UDim2.new(0.5, -220, 0.5, -160)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
 MainFrame.BorderSizePixel = 0
 MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -80,7 +78,7 @@ CloseBtn.TextSize = 16
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.Parent = TopBar
 
--- Маленький квадрат (кнопка открытия при свернутом меню) с возможностью перемещения
+-- Маленький квадрат (кнопка открытия при свернутом меню)
 local OpenButton = Instance.new("TextButton")
 OpenButton.Name = "OpenButton"
 OpenButton.Size = UDim2.new(0, 45, 0, 45)
@@ -102,7 +100,7 @@ OpenStroke.Color = Color3.fromRGB(50, 50, 70)
 OpenStroke.Thickness = 1.5
 OpenStroke.Parent = OpenButton
 
--- Логика перетаскивания (Drag & Drop) для MainFrame
+-- Логика перетаскивания (Drag & Drop)
 local dragging, dragInput, dragStart, startPos
 
 TopBar.InputBegan:Connect(function(input)
@@ -153,7 +151,7 @@ UIList.SortOrder = Enum.SortOrder.LayoutOrder
 UIList.Padding = UDim.new(0, 8)
 UIList.Parent = ContentContainer
 
--- Функция генерации переключателей (Toggles)
+-- Функция генерации переключателей
 local function CreateToggle(name, callback)
     local ToggleFrame = Instance.new("Frame")
     ToggleFrame.Size = UDim2.new(1, 0, 0, 40)
@@ -280,7 +278,7 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- 3. Night Mode (Ночь)
+-- 3. Night Mode
 CreateToggle("Night Mode (Ночь)", function(state)
     if state then
         Lighting.ClockTime = 0
@@ -293,7 +291,7 @@ CreateToggle("Night Mode (Ночь)", function(state)
     end
 end)
 
--- 4. Fullbright (Яркий свет)
+-- 4. Fullbright
 CreateToggle("Fullbright (Яркий свет)", function(state)
     if state then
         Lighting.GlobalShadows = false
@@ -305,7 +303,7 @@ CreateToggle("Fullbright (Яркий свет)", function(state)
 end)
 
 -- ========================================================
--- АНИМАЦИИ СВОРАЧИВАНИЯ / РАЗВОРАЧИВАНИЯ
+-- АНИМАЦИИ
 -- ========================================================
 
 local function CloseMenu()
@@ -335,7 +333,7 @@ local function OpenMenu()
     Title.TextTransparency = 0
     TopBar.BackgroundTransparency = 0
     
-    local openTween = TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0.4, 0, 0.45, 0), BackgroundTransparency = 0})
+    local openTween = TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 440, 0, 320), BackgroundTransparency = 0})
     openTween:Play()
 end
 
