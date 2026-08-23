@@ -1,44 +1,56 @@
--- N1zoxir Over Mod v3.0 [MOBILE]
+-- N1zoxir Over Mod v3.1 [MOBILE ULTRA]
 -- Для Arceus X / Hydrogen / Codex
--- Работает на телефоне!
+-- Фикс: FLY, NOCLIP, INFINITE JUMP
+-- Новый дизайн + плавающая иконка
 
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 
--- ======== СОЗДАЁМ GUI ДЛЯ ТЕЛЕФОНА ========
+-- ======== ПЕРЕМЕННЫЕ ДЛЯ ФУНКЦИЙ ========
+local flyActive = false
+local flyBodyVel = nil
+local noclipActive = false
+local jumpActive = false
+
+-- ======== ГЛАВНОЕ МЕНЮ ========
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = game.CoreGui
-ScreenGui.Name = "N1zoxirMobile"
+ScreenGui.Name = "N1zoxirMenu"
+ScreenGui.ResetOnSpawn = false
 
--- ======== ГЛАВНОЕ МЕНЮ (БОЛЬШИЕ КНОПКИ ДЛЯ ПАЛЬЦЕВ) ========
+-- ======== ФОН МЕНЮ (НОВЫЙ ДИЗАЙН) ========
 local MainFrame = Instance.new("Frame")
 MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
-MainFrame.BackgroundTransparency = 0.1
+MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 20)
+MainFrame.BackgroundTransparency = 0.05
 MainFrame.BorderSizePixel = 3
-MainFrame.BorderColor3 = Color3.fromRGB(0, 200, 255)
-MainFrame.Position = UDim2.new(0.1, 0, 0.1, 0)
-MainFrame.Size = UDim2.new(0, 350, 0, 520)
+MainFrame.BorderColor3 = Color3.fromRGB(255, 0, 200) -- НЕОНОВЫЙ РОЗОВЫЙ
+MainFrame.Position = UDim2.new(0.1, 0, 0.08, 0)
+MainFrame.Size = UDim2.new(0, 380, 0, 580)
 MainFrame.Active = true
 MainFrame.Draggable = true
+MainFrame.ClipsDescendants = false
 
--- ======== ЗАГОЛОВОК ========
+-- ======== ЗАГОЛОВОК С ГРАДИЕНТОМ ========
 local Title = Instance.new("TextLabel")
 Title.Parent = MainFrame
-Title.BackgroundColor3 = Color3.fromRGB(0, 30, 50)
+Title.BackgroundColor3 = Color3.fromRGB(20, 0, 40)
+Title.BackgroundTransparency = 0.2
 Title.Size = UDim2.new(1, 0, 0, 50)
 Title.Position = UDim2.new(0, 0, 0, 0)
-Title.Text = "🔥 N1zoxir Mod [Mobile]"
-Title.TextColor3 = Color3.fromRGB(0, 200, 255)
+Title.Text = "🔥 N1zoxir Over Mod v3.1"
+Title.TextColor3 = Color3.fromRGB(255, 0, 200)
 Title.TextSize = 20
 Title.Font = Enum.Font.GothamBold
 Title.TextScaled = true
 Title.TextXAlignment = Enum.TextXAlignment.Center
 
--- ======== КНОПКА ЗАКРЫТИЯ (БОЛЬШАЯ) ========
+-- ======== КНОПКА ЗАКРЫТИЯ (КРАСНЫЙ КРЕСТ) ========
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Parent = MainFrame
-CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 30, 30)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 CloseBtn.Size = UDim2.new(0, 50, 0, 40)
 CloseBtn.Position = UDim2.new(1, -55, 0, 5)
 CloseBtn.Text = "✕"
@@ -47,85 +59,114 @@ CloseBtn.TextSize = 24
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.BorderSizePixel = 0
 CloseBtn.MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
+    MainFrame.Visible = false
+    ToggleBtn.Visible = true -- ПОЯВЛЯЕТСЯ МАЛЕНЬКИЙ КВАДРАТИК
 end)
 
--- ======== ФУНКЦИЯ СОЗДАНИЯ БОЛЬШИХ КНОПОК ========
-local function CreateBigButton(text, yPos, color, callback)
+-- ======== ФУНКЦИЯ СОЗДАНИЯ КНОПОК (НОВЫЙ СТИЛЬ) ========
+local function CreateButton(text, yPos, color, callback)
     local btn = Instance.new("TextButton")
     btn.Parent = MainFrame
-    btn.BackgroundColor3 = color or Color3.fromRGB(30, 30, 50)
-    btn.BackgroundTransparency = 0.2
-    btn.Size = UDim2.new(0.85, 0, 0, 50)
-    btn.Position = UDim2.new(0.075, 0, 0, yPos)
+    btn.BackgroundColor3 = color or Color3.fromRGB(25, 25, 45)
+    btn.BackgroundTransparency = 0.1
+    btn.Size = UDim2.new(0.82, 0, 0, 50)
+    btn.Position = UDim2.new(0.09, 0, 0, yPos)
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 18
+    btn.TextSize = 16
     btn.Font = Enum.Font.GothamBold
     btn.BorderSizePixel = 2
-    btn.BorderColor3 = Color3.fromRGB(0, 200, 255)
-    btn.MouseButton1Click:Connect(callback)
+    btn.BorderColor3 = Color3.fromRGB(255, 0, 200)
     
-    -- Эффект нажатия для телефона
+    -- ЭФФЕКТ НАЖАТИЯ
     btn.MouseButton1Down:Connect(function()
-        btn.BackgroundColor3 = Color3.fromRGB(80, 80, 120)
+        btn.BackgroundColor3 = Color3.fromRGB(60, 0, 80)
     end)
     btn.MouseButton1Up:Connect(function()
-        btn.BackgroundColor3 = color or Color3.fromRGB(30, 30, 50)
+        btn.BackgroundColor3 = color or Color3.fromRGB(25, 25, 45)
     end)
+    
+    btn.MouseButton1Click:Connect(callback)
     return btn
 end
 
--- ======== ФУНКЦИИ ДЛЯ ТЕЛЕФОНА ========
+-- ======== ФУНКЦИИ С ФИКСАМИ ========
+
+-- **ФЛАЙ (БЕСКОНЕЧНЫЙ)**
 local function FlyMobile()
     local char = Player.Character
     if not char then return end
     local root = char:FindFirstChild("HumanoidRootPart")
     if not root then return end
-    local bv = Instance.new("BodyVelocity")
-    bv.MaxForce = Vector3.new(4000, 4000, 4000)
-    bv.Velocity = Vector3.new(0, 30, 0)
-    bv.Parent = root
-    task.wait(0.3)
-    bv:Destroy()
-end
-
-local function SpeedMobile()
-    local char = Player.Character
-    if not char then return end
-    local hum = char:FindFirstChild("Humanoid")
-    if not hum then return end
-    if hum.WalkSpeed ~= 80 then
-        hum.WalkSpeed = 80
-        hum.JumpPower = 70
-    else
-        hum.WalkSpeed = 16
-        hum.JumpPower = 50
+    
+    if flyActive then
+        flyActive = false
+        if flyBodyVel then flyBodyVel:Destroy() end
+        return
     end
+    
+    flyActive = true
+    flyBodyVel = Instance.new("BodyVelocity")
+    flyBodyVel.MaxForce = Vector3.new(4000, 4000, 4000)
+    flyBodyVel.Velocity = Vector3.new(0, 30, 0)
+    flyBodyVel.Parent = root
+    
+    -- АВТООТКЛЮЧЕНИЕ ПО ПОВТОРНОМУ НАЖАТИЮ
 end
 
+-- **НОКЛИП (РАБОЧИЙ)**
 local function NoclipMobile()
     local char = Player.Character
     if not char then return end
+    
+    noclipActive = not noclipActive
+    
     for _, part in pairs(char:GetDescendants()) do
         if part:IsA("BasePart") then
-            part.CanCollide = not part.CanCollide
+            part.CanCollide = not noclipActive
         end
+    end
+    
+    -- ПОСТОЯННЫЙ НОКЛИП (ЧЕРЕЗ СТИМ)
+    if noclipActive then
+        game:GetService("RunService").Stepped:Connect(function()
+            if not noclipActive then return end
+            local char = Player.Character
+            if not char then return end
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end)
     end
 end
 
+-- **ИНФИНИТИ ДЖАМП (РАБОЧИЙ)**
 local function JumpMobile()
     local char = Player.Character
     if not char then return end
     local hum = char:FindFirstChild("Humanoid")
     if not hum then return end
-    if hum.MaxJumpHeight == 50 then
-        hum.MaxJumpHeight = 7.2
-    else
+    
+    jumpActive = not jumpActive
+    
+    if jumpActive then
         hum.MaxJumpHeight = 50
+        -- БЕСКОНЕЧНЫЙ ДЖАМП ЧЕРЕЗ ПРЫЖОК
+        hum.JumpPower = 80
+        game:GetService("UserInputService").JumpRequest:Connect(function()
+            if jumpActive and hum then
+                hum:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end)
+    else
+        hum.MaxJumpHeight = 7.2
+        hum.JumpPower = 50
     end
 end
 
+-- **ТЕЛЕПОРТ**
 local function TeleportMobile()
     local char = Player.Character
     if char and char:FindFirstChild("HumanoidRootPart") then
@@ -133,6 +174,7 @@ local function TeleportMobile()
     end
 end
 
+-- **ГОД МОД**
 local function GodMobile()
     local char = Player.Character
     if not char then return end
@@ -147,60 +189,118 @@ local function GodMobile()
     end
 end
 
--- ======== БОЛЬШИЕ КНОПКИ ДЛЯ ТЕЛЕФОНА ========
-CreateBigButton("🪁 FLY", 60, Color3.fromRGB(0, 100, 200), FlyMobile)
-CreateBigButton("💨 SPEED x5", 120, Color3.fromRGB(200, 100, 0), SpeedMobile)
-CreateBigButton("🌀 NOCLIP", 180, Color3.fromRGB(150, 0, 200), NoclipMobile)
-CreateBigButton("🦘 INFINITE JUMP", 240, Color3.fromRGB(0, 200, 100), JumpMobile)
-CreateBigButton("🛡️ GOD MODE", 300, Color3.fromRGB(0, 150, 255), GodMobile)
-CreateBigButton("📍 TELEPORT", 360, Color3.fromRGB(0, 200, 200), TeleportMobile)
-
--- ======== КНОПКА ВЫХОДА ========
-local ExitMobile = Instance.new("TextButton")
-ExitMobile.Parent = MainFrame
-ExitMobile.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
-ExitMobile.Size = UDim2.new(0.85, 0, 0, 50)
-ExitMobile.Position = UDim2.new(0.075, 0, 0, 420)
-ExitMobile.Text = "❌ ВЫХОД"
-ExitMobile.TextColor3 = Color3.fromRGB(255, 255, 255)
-ExitMobile.TextSize = 20
-ExitMobile.Font = Enum.Font.GothamBold
-ExitMobile.BorderSizePixel = 2
-ExitMobile.BorderColor3 = Color3.fromRGB(255, 0, 0)
-ExitMobile.MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
-end)
-
--- ======== ОТКРЫТИЕ ПО КНОПКЕ (ДЛЯ ТЕЛЕФОНА) ========
-local UserInputService = game:GetService("UserInputService")
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed then
-        if input.UserInputType == Enum.UserInputType.Touch then
-            -- Двойной тап по экрану (имитация)
-            print("👆 Нажми на иконку в левом верхнем углу")
+-- **УДАР МОЛНИИ**
+local function LightningStrike()
+    local char = Player.Character
+    if not char then return end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+    
+    local lightning = Instance.new("Part")
+    lightning.Size = Vector3.new(1, 50, 1)
+    lightning.BrickColor = BrickColor.new("Bright yellow")
+    lightning.Material = Enum.Material.Neon
+    lightning.CFrame = root.CFrame + Vector3.new(0, 25, 0)
+    lightning.Parent = workspace
+    lightning.Anchored = true
+    
+    -- УДАР ПО БЛИЖАЙШЕМУ ИГРОКУ
+    local nearest = nil
+    local dist = math.huge
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= Player then
+            local char = player.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local d = (char.HumanoidRootPart.Position - root.Position).Magnitude
+                if d < dist then
+                    dist = d
+                    nearest = char
+                end
+            end
         end
     end
-end)
+    
+    if nearest then
+        local hum = nearest:FindFirstChild("Humanoid")
+        if hum then
+            hum.Health = 0
+        end
+    end
+    
+    game:GetService("Debris"):AddItem(lightning, 0.5)
+end
 
--- ======== ДОБАВЛЯЕМ КНОПКУ НА ЭКРАН (ДЛЯ ТЕЛЕФОНА) ========
+-- **ЭФФЕКТ НЕОНА**
+local function NeonEffect()
+    local char = Player.Character
+    if not char then return end
+    
+    for _, part in pairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Material = Enum.Material.Neon
+            part.BrickColor = BrickColor.new("Bright violet")
+        end
+    end
+end
+
+-- ======== КНОПКИ С НОВЫМИ ФУНКЦИЯМИ ========
+CreateButton("🪁 FLY (toggle)", 60, Color3.fromRGB(0, 100, 200), FlyMobile)
+CreateButton("💨 SPEED x5", 120, Color3.fromRGB(200, 100, 0), SpeedMobile)
+CreateButton("🌀 NOCLIP (toggle)", 180, Color3.fromRGB(150, 0, 200), NoclipMobile)
+CreateButton("🦘 INFINITE JUMP (toggle)", 240, Color3.fromRGB(0, 200, 100), JumpMobile)
+CreateButton("🛡️ GOD MODE", 300, Color3.fromRGB(0, 150, 255), GodMobile)
+CreateButton("📍 TELEPORT", 360, Color3.fromRGB(0, 200, 200), TeleportMobile)
+CreateButton("⚡ LIGHTNING STRIKE", 420, Color3.fromRGB(255, 200, 0), LightningStrike)
+CreateButton("🌈 NEON EFFECT", 480, Color3.fromRGB(200, 0, 255), NeonEffect)
+
+-- ======== МАЛЕНЬКИЙ КВАДРАТИК (ПЛАВАЮЩАЯ ИКОНКА) ========
 local ToggleBtn = Instance.new("ImageButton")
 ToggleBtn.Parent = ScreenGui
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
-ToggleBtn.BackgroundTransparency = 0.3
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 200)
+ToggleBtn.BackgroundTransparency = 0.1
 ToggleBtn.Size = UDim2.new(0, 60, 0, 60)
-ToggleBtn.Position = UDim2.new(0.02, 0, 0.85, 0)
+ToggleBtn.Position = UDim2.new(0.02, 0, 0.8, 0)
 ToggleBtn.Image = "rbxassetid://6031098377" -- шестерёнка
-ToggleBtn.BorderSizePixel = 0
+ToggleBtn.BorderSizePixel = 2
+ToggleBtn.BorderColor3 = Color3.fromRGB(255, 0, 200)
+ToggleBtn.Visible = false -- СНАЧАЛА СКРЫТА
 
+-- ПРИ НАЖАТИИ НА КВАДРАТИК - ОТКРЫВАЕМ МЕНЮ
 ToggleBtn.MouseButton1Click:Connect(function()
-    if MainFrame.Visible then
-        MainFrame.Visible = false
-        ToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-    else
-        MainFrame.Visible = true
-        ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+    MainFrame.Visible = true
+    ToggleBtn.Visible = false
+end)
+
+-- ======== ПЕРЕТАСКИВАНИЕ ДЛЯ ТЕЛЕФОНА ========
+local dragging = false
+local dragStart = nil
+local startPos = nil
+
+MainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
     end
 end)
 
-print("✅ N1zoxir Over Mod v3.0 [MOBILE] загружен!")
-print("📱 Нажми на шестерёнку внизу экрана")
+MainFrame.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.Touch then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+print("✅ N1zoxir Over Mod v3.1 [MOBILE ULTRA] загружен!")
+print("📱 Нажми на шестерёнку внизу экрана"
