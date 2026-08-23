@@ -1,5 +1,5 @@
--- N1zoxir Control Center v4.8 [ВКЛАДКИ: HOME, COMBAT, PLAYER, VISUALS, UTILITY]
--- ВСЁ РАБОТАЕТ: ПЕРЕКЛЮЧЕНИЕ, ПЕРЕТАСКИВАНИЕ, СВОРАЧИВАНИЕ
+-- N1zoxir Control Center v5.0 [ПРОСТОЕ ЛИСТАНИЕ, ВСЁ РАБОТАЕТ]
+-- БЕЗ ScrollingFrame, ПРОСТО КНОПКИ + ПЕРЕКЛЮЧЕНИЕ
 
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
@@ -22,7 +22,6 @@ local hatActive = false
 local hatParts = {}
 
 -- ======== ФУНКЦИИ ========
-
 local function toggleFly()
     local char = Player.Character
     if not char then return end
@@ -294,11 +293,26 @@ MinimizeBtn.TextSize = 20
 MinimizeBtn.Font = Enum.Font.GothamBold
 MinimizeBtn.BorderSizePixel = 0
 
--- ВКЛАДКИ (ТОЛЬКО НУЖНЫЕ)
+-- ВКЛАДКИ
 local Tabs = {"Home", "Combat", "Player", "Visuals", "Utility"}
 local TabButtons = {}
 local currentTab = "Home"
+local ContentFrame = nil -- контейнер для кнопок
 
+-- СОЗДАЁМ КОНТЕЙНЕР ДЛЯ КНОПОК (ПРОСТОЙ FRAME)
+local function createContentFrame()
+    if ContentFrame then ContentFrame:Destroy() end
+    ContentFrame = Instance.new("Frame")
+    ContentFrame.Parent = MainFrame
+    ContentFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    ContentFrame.BackgroundTransparency = 1
+    ContentFrame.Size = UDim2.new(1, 0, 1, -85)
+    ContentFrame.Position = UDim2.new(0, 0, 0, 85)
+    ContentFrame.ClipsDescendants = true
+    return ContentFrame
+end
+
+-- ПАНЕЛЬ ВКЛАДОК
 local TabBar = Instance.new("Frame")
 TabBar.Parent = MainFrame
 TabBar.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
@@ -330,17 +344,6 @@ for i, tab in pairs(Tabs) do
     end)
 end
 
--- КОНТЕЙНЕР ДЛЯ КНОПОК
-local ContentContainer = Instance.new("ScrollingFrame")
-ContentContainer.Parent = MainFrame
-ContentContainer.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-ContentContainer.BackgroundTransparency = 1
-ContentContainer.Size = UDim2.new(1, 0, 1, -85)
-ContentContainer.Position = UDim2.new(0, 0, 0, 85)
-ContentContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-ContentContainer.ScrollBarThickness = 6
-ContentContainer.ScrollBarImageColor3 = Color3.fromRGB(0, 180, 255)
-
 -- ФУНКЦИЯ СОЗДАНИЯ КНОПКИ
 local function createButton(parent, text, yPos, color, callback)
     local btn = Instance.new("TextButton")
@@ -361,18 +364,21 @@ end
 
 -- ФУНКЦИЯ ОБНОВЛЕНИЯ КОНТЕНТА
 local function updateContent(tab)
-    -- Очищаем контейнер
-    for _, child in pairs(ContentContainer:GetChildren()) do
-        if child:IsA("TextButton") or child:IsA("TextLabel") then
+    -- Удаляем все кнопки из контейнера
+    if ContentFrame then
+        for _, child in pairs(ContentFrame:GetChildren()) do
             child:Destroy()
         end
+    else
+        ContentFrame = createContentFrame()
     end
     
     local y = 10
+    local parent = ContentFrame
     
     if tab == "Home" then
         local label = Instance.new("TextLabel")
-        label.Parent = ContentContainer
+        label.Parent = parent
         label.BackgroundTransparency = 1
         label.Size = UDim2.new(1, 0, 0, 30)
         label.Position = UDim2.new(0, 0, 0, y)
@@ -381,19 +387,19 @@ local function updateContent(tab)
         label.TextSize = 14
         label.Font = Enum.Font.GothamBold
         y = y + 35
-        createButton(ContentContainer, "🪁 FLY (toggle)", y, Color3.fromRGB(0, 100, 200), toggleFly)
+        createButton(parent, "🪁 FLY (toggle)", y, Color3.fromRGB(0, 100, 200), toggleFly)
         y = y + 45
-        createButton(ContentContainer, "🌀 NOCLIP (toggle)", y, Color3.fromRGB(150, 0, 200), toggleNoclip)
+        createButton(parent, "🌀 NOCLIP (toggle)", y, Color3.fromRGB(150, 0, 200), toggleNoclip)
         y = y + 45
-        createButton(ContentContainer, "🦘 INFINITE JUMP (toggle)", y, Color3.fromRGB(0, 200, 100), toggleJump)
+        createButton(parent, "🦘 INFINITE JUMP (toggle)", y, Color3.fromRGB(0, 200, 100), toggleJump)
         y = y + 45
-        createButton(ContentContainer, "💨 SPEED x5 (toggle)", y, Color3.fromRGB(200, 100, 0), toggleSpeed)
+        createButton(parent, "💨 SPEED x5 (toggle)", y, Color3.fromRGB(200, 100, 0), toggleSpeed)
         y = y + 45
-        createButton(ContentContainer, "📍 TELEPORT TO CENTER", y, Color3.fromRGB(0, 200, 200), teleportCenter)
+        createButton(parent, "📍 TELEPORT TO CENTER", y, Color3.fromRGB(0, 200, 200), teleportCenter)
         
     elseif tab == "Combat" then
         local label = Instance.new("TextLabel")
-        label.Parent = ContentContainer
+        label.Parent = parent
         label.BackgroundTransparency = 1
         label.Size = UDim2.new(1, 0, 0, 30)
         label.Position = UDim2.new(0, 0, 0, y)
@@ -402,13 +408,13 @@ local function updateContent(tab)
         label.TextSize = 14
         label.Font = Enum.Font.GothamBold
         y = y + 35
-        createButton(ContentContainer, "⚡ LIGHTNING STRIKE", y, Color3.fromRGB(255, 200, 0), lightningStrike)
+        createButton(parent, "⚡ LIGHTNING STRIKE", y, Color3.fromRGB(255, 200, 0), lightningStrike)
         y = y + 45
-        createButton(ContentContainer, "🛡️ GOD MODE (toggle)", y, Color3.fromRGB(0, 150, 255), godMode)
+        createButton(parent, "🛡️ GOD MODE (toggle)", y, Color3.fromRGB(0, 150, 255), godMode)
         
     elseif tab == "Player" then
         local label = Instance.new("TextLabel")
-        label.Parent = ContentContainer
+        label.Parent = parent
         label.BackgroundTransparency = 1
         label.Size = UDim2.new(1, 0, 0, 30)
         label.Position = UDim2.new(0, 0, 0, y)
@@ -417,11 +423,11 @@ local function updateContent(tab)
         label.TextSize = 14
         label.Font = Enum.Font.GothamBold
         y = y + 35
-        createButton(ContentContainer, "🐉 CHINESE HAT (toggle)", y, Color3.fromRGB(255, 50, 50), toggleHat)
+        createButton(parent, "🐉 CHINESE HAT (toggle)", y, Color3.fromRGB(255, 50, 50), toggleHat)
         
     elseif tab == "Visuals" then
         local label = Instance.new("TextLabel")
-        label.Parent = ContentContainer
+        label.Parent = parent
         label.BackgroundTransparency = 1
         label.Size = UDim2.new(1, 0, 0, 30)
         label.Position = UDim2.new(0, 0, 0, y)
@@ -430,15 +436,15 @@ local function updateContent(tab)
         label.TextSize = 14
         label.Font = Enum.Font.GothamBold
         y = y + 35
-        createButton(ContentContainer, "👁️ ESP (toggle)", y, Color3.fromRGB(0, 200, 200), toggleESP)
+        createButton(parent, "👁️ ESP (toggle)", y, Color3.fromRGB(0, 200, 200), toggleESP)
         y = y + 45
-        createButton(ContentContainer, "🌙 NIGHT MODE (toggle)", y, Color3.fromRGB(100, 50, 200), toggleNight)
+        createButton(parent, "🌙 NIGHT MODE (toggle)", y, Color3.fromRGB(100, 50, 200), toggleNight)
         y = y + 45
-        createButton(ContentContainer, "🌈 NEON EFFECT", y, Color3.fromRGB(200, 0, 255), neonEffect)
+        createButton(parent, "🌈 NEON EFFECT", y, Color3.fromRGB(200, 0, 255), neonEffect)
         
     elseif tab == "Utility" then
         local label = Instance.new("TextLabel")
-        label.Parent = ContentContainer
+        label.Parent = parent
         label.BackgroundTransparency = 1
         label.Size = UDim2.new(1, 0, 0, 30)
         label.Position = UDim2.new(0, 0, 0, y)
@@ -447,13 +453,12 @@ local function updateContent(tab)
         label.TextSize = 14
         label.Font = Enum.Font.GothamBold
         y = y + 35
-        createButton(ContentContainer, "🔄 ANTI AFK", y, Color3.fromRGB(100, 100, 200), antiAFK)
+        createButton(parent, "🔄 ANTI AFK", y, Color3.fromRGB(100, 100, 200), antiAFK)
     end
-    
-    ContentContainer.CanvasSize = UDim2.new(0, 0, 0, y + 50)
 end
 
 -- АКТИВИРУЕМ ПЕРВУЮ ВКЛАДКУ
+createContentFrame()
 TabButtons["Home"].TextColor3 = Color3.fromRGB(0, 180, 255)
 updateContent("Home")
 
@@ -510,5 +515,4 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
-print("✅ N1zoxir Control Center v4.8 загружен!")
-print("📱 Вкладки: Home, Combat, Player, Visuals, Utility")
+print("✅ N1zoxir Control Center v5.0 загружен!")
