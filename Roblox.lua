@@ -1,4 +1,4 @@
--- [[ San Diego | Adaptive & Draggable Visual Hub (PlayerGui Fix) ]] --
+-- [[ San Diego | Visual Hub (Start Minimized & Draggable) ]] --
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
@@ -19,14 +19,16 @@ ScreenGui.Parent = PlayerGui
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.ResetOnSpawn = false
 
--- Главное окно меню (Адаптированное)
+-- Главное окно меню (Изначально скрыто / свернуто)
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 440, 0, 320)
+MainFrame.Size = UDim2.new(0, 0, 0, 0)
 MainFrame.Position = UDim2.new(0.5, -220, 0.5, -160)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
 MainFrame.BorderSizePixel = 0
 MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+MainFrame.Visible = false
+MainFrame.BackgroundTransparency = 1
 MainFrame.Parent = ScreenGui
 
 local UICorner = Instance.new("UICorner")
@@ -43,6 +45,7 @@ local TopBar = Instance.new("Frame")
 TopBar.Size = UDim2.new(1, 0, 0, 45)
 TopBar.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
 TopBar.BorderSizePixel = 0
+TopBar.BackgroundTransparency = 1
 TopBar.Parent = MainFrame
 
 local TopCorner = Instance.new("UICorner")
@@ -65,6 +68,7 @@ Title.TextColor3 = Color3.fromRGB(240, 240, 255)
 Title.TextSize = 15
 Title.Font = Enum.Font.GothamBold
 Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.TextTransparency = 1
 Title.Parent = TopBar
 
 -- Кнопка закрытия (крестик)
@@ -78,17 +82,17 @@ CloseBtn.TextSize = 16
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.Parent = TopBar
 
--- Маленький квадрат (кнопка открытия при свернутом меню)
+-- Маленький квадрат (Кнопка открытия - появляется сразу)
 local OpenButton = Instance.new("TextButton")
 OpenButton.Name = "OpenButton"
 OpenButton.Size = UDim2.new(0, 45, 0, 45)
-OpenButton.Position = UDim2.new(0.05, 0, 0.5, 0)
+OpenButton.Position = UDim2.new(0, 30, 0.5, -22)
 OpenButton.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
 OpenButton.Text = "SD"
 OpenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 OpenButton.TextSize = 14
 OpenButton.Font = Enum.Font.GothamBold
-OpenButton.Visible = false
+OpenButton.Visible = true
 OpenButton.Parent = ScreenGui
 
 local OpenCorner = Instance.new("UICorner")
@@ -100,7 +104,7 @@ OpenStroke.Color = Color3.fromRGB(50, 50, 70)
 OpenStroke.Thickness = 1.5
 OpenStroke.Parent = OpenButton
 
--- Логика перетаскивания (Drag & Drop)
+-- Перетаскивание для Главного меню (MainFrame)
 local dragging, dragInput, dragStart, startPos
 
 TopBar.InputBegan:Connect(function(input)
@@ -131,6 +135,41 @@ UserInputService.InputChanged:Connect(function(input)
             startPos.X.Offset + delta.X, 
             startPos.Y.Scale, 
             startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+-- Перетаскивание для маленькой кнопки (OpenButton)
+local openDragging, openDragInput, openDragStart, openStartPos
+
+OpenButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        openDragging = true
+        openDragStart = input.Position
+        openStartPos = OpenButton.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                openDragging = false
+            end
+        end)
+    end
+end)
+
+OpenButton.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        openDragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == openDragInput and openDragging then
+        local delta = input.Position - openDragStart
+        OpenButton.Position = UDim2.new(
+            openStartPos.X.Scale, 
+            openStartPos.X.Offset + delta.X, 
+            openStartPos.Y.Scale, 
+            openStartPos.Y.Offset + delta.Y
         )
     end
 end)
@@ -303,7 +342,7 @@ CreateToggle("Fullbright (Яркий свет)", function(state)
 end)
 
 -- ========================================================
--- АНИМАЦИИ
+-- АНИМАЦИИ ОТКРЫТИЯ / ЗАКРЫТИЯ
 -- ========================================================
 
 local function CloseMenu()
@@ -323,6 +362,9 @@ local function CloseMenu()
 end
 
 local function OpenMenu()
+    -- Проверяем, не перетаскивают ли кнопку в момент клика
+    if openDragging then return end
+
     TweenService:Create(OpenButton, TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0)}):Play()
     task.wait(0.1)
     
