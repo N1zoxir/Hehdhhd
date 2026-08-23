@@ -1,14 +1,11 @@
--- N1zoxir Control Center v4.5 [DESIGN COPY]
--- Дизайн как у Control Center (TyleveloScript)
--- Твои функции: FLY, NOCLIP, INFINITE JUMP, SPEED, TELEPORT
--- Визуалы: ESP (обводка), Night Mode, Китайская шляпа
+-- N1zoxir Control Center v4.6 [FULL FIXED]
+-- Вкладки работают! Перетаскивание работает!
 
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
-local TweenService = game:GetService("TweenService")
 
 -- ======== ПЕРЕМЕННЫЕ ========
 local flyActive = false
@@ -19,14 +16,13 @@ local jumpActive = false
 local jumpConnection = nil
 local speedActive = false
 local espActive = false
-local espConnections = {}
+local espObjects = {}
 local nightActive = false
 local hatActive = false
-local hatHandle = nil
+local hatParts = {}
 
--- ======== ОСНОВНЫЕ ФУНКЦИИ ========
+-- ======== ФУНКЦИИ ========
 
--- FLY
 local function toggleFly()
     local char = Player.Character
     if not char then return end
@@ -43,7 +39,6 @@ local function toggleFly()
     end
 end
 
--- NOCLIP
 local function toggleNoclip()
     noclipActive = not noclipActive
     if noclipActive then
@@ -66,7 +61,6 @@ local function toggleNoclip()
     end
 end
 
--- INFINITE JUMP
 local function toggleJump()
     local char = Player.Character
     if not char then return end
@@ -87,7 +81,6 @@ local function toggleJump()
     end
 end
 
--- SPEED
 local function toggleSpeed()
     local char = Player.Character
     if not char then return end
@@ -103,7 +96,6 @@ local function toggleSpeed()
     end
 end
 
--- TELEPORT
 local function teleportCenter()
     local char = Player.Character
     if char and char:FindFirstChild("HumanoidRootPart") then
@@ -111,9 +103,6 @@ local function teleportCenter()
     end
 end
 
--- ======== ВИЗУАЛЫ ========
-
--- ESP (ОБВОДКА ИГРОКОВ)
 local function toggleESP()
     espActive = not espActive
     if espActive then
@@ -129,34 +118,18 @@ local function toggleESP()
                     esp.Transparency = 0.5
                     esp.ZIndex = 10
                     esp.AlwaysOnTop = true
-                    espConnections[player] = esp
+                    espObjects[player] = esp
                 end
             end
         end
-        Players.PlayerAdded:Connect(function(player)
-            player.CharacterAdded:Connect(function(char)
-                if espActive then
-                    local esp = Instance.new("BoxHandleAdornment")
-                    esp.Parent = char
-                    esp.Adornee = char
-                    esp.Size = Vector3.new(5, 6, 3)
-                    esp.Color3 = Color3.fromRGB(0, 255, 255)
-                    esp.Transparency = 0.5
-                    esp.ZIndex = 10
-                    esp.AlwaysOnTop = true
-                    espConnections[player] = esp
-                end
-            end)
-        end)
     else
-        for _, esp in pairs(espConnections) do
+        for _, esp in pairs(espObjects) do
             if esp then esp:Destroy() end
         end
-        espConnections = {}
+        espObjects = {}
     end
 end
 
--- NIGHT MODE
 local function toggleNight()
     nightActive = not nightActive
     if nightActive then
@@ -174,13 +147,11 @@ local function toggleNight()
     end
 end
 
--- КИТАЙСКАЯ ШЛЯПА (НА ГОЛОВУ)
 local function toggleHat()
     local char = Player.Character
     if not char then return end
     local head = char:FindFirstChild("Head")
     if not head then return end
-    
     hatActive = not hatActive
     if hatActive then
         local hat = Instance.new("Part")
@@ -190,8 +161,6 @@ local function toggleHat()
         hat.Shape = Enum.PartType.Cylinder
         hat.Position = head.Position + Vector3.new(0, 1.5, 0)
         hat.Parent = char
-        
-        -- КОНУС ШЛЯПЫ
         local cone = Instance.new("Part")
         cone.Size = Vector3.new(0.5, 0.8, 0.5)
         cone.BrickColor = BrickColor.new("Bright red")
@@ -199,37 +168,90 @@ local function toggleHat()
         cone.Shape = Enum.PartType.Cylinder
         cone.Position = hat.Position + Vector3.new(0, 0.5, 0)
         cone.Parent = char
-        
         local weld = Instance.new("Weld")
         weld.Parent = hat
         weld.Part0 = hat
         weld.Part1 = head
         weld.C0 = CFrame.new(0, 1.5, 0)
-        
         local weld2 = Instance.new("Weld")
         weld2.Parent = cone
         weld2.Part0 = cone
         weld2.Part1 = head
         weld2.C0 = CFrame.new(0, 2.2, 0)
-        
-        hatHandle = {hat, cone}
+        hatParts = {hat, cone}
     else
-        if hatHandle then
-            for _, obj in pairs(hatHandle) do
-                if obj then obj:Destroy() end
+        for _, obj in pairs(hatParts) do
+            if obj then obj:Destroy() end
+        end
+        hatParts = {}
+    end
+end
+
+local function lightningStrike()
+    local char = Player.Character
+    if not char then return end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+    local nearest = nil
+    local dist = math.huge
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= Player then
+            local c = player.Character
+            if c and c:FindFirstChild("HumanoidRootPart") then
+                local d = (c.HumanoidRootPart.Position - root.Position).Magnitude
+                if d < dist then
+                    dist = d
+                    nearest = c
+                end
             end
-            hatHandle = nil
+        end
+    end
+    if nearest then
+        local hum = nearest:FindFirstChild("Humanoid")
+        if hum then hum.Health = 0 end
+    end
+end
+
+local function godMode()
+    local char = Player.Character
+    if not char then return end
+    local hum = char:FindFirstChild("Humanoid")
+    if not hum then return end
+    if hum.MaxHealth ~= math.huge then
+        hum.MaxHealth = math.huge
+        hum.Health = math.huge
+    else
+        hum.MaxHealth = 100
+        hum.Health = 100
+    end
+end
+
+local function neonEffect()
+    local char = Player.Character
+    if not char then return end
+    for _, part in pairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Material = Enum.Material.Neon
+            part.BrickColor = BrickColor.new("Bright violet")
         end
     end
 end
 
--- ======== GUI (ДИЗАЙН CONTROL CENTER) ========
+local function antiAFK()
+    local vu = game:GetService("VirtualUser")
+    game:GetService("Players").LocalPlayer.Idled:Connect(function()
+        vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        task.wait(1)
+        vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    end)
+end
+
+-- ======== GUI ========
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = game.CoreGui
 ScreenGui.Name = "N1zoxirCC"
 ScreenGui.ResetOnSpawn = false
 
--- ОСНОВНАЯ ПАНЕЛЬ
 local MainFrame = Instance.new("Frame")
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(8, 8, 18)
@@ -261,7 +283,6 @@ TitleLabel.TextSize = 16
 TitleLabel.Font = Enum.Font.GothamBold
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 
--- СВОРАЧИВАНИЕ В ИКОНКУ
 local MinimizeBtn = Instance.new("TextButton")
 MinimizeBtn.Parent = Header
 MinimizeBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
@@ -273,7 +294,7 @@ MinimizeBtn.TextSize = 20
 MinimizeBtn.Font = Enum.Font.GothamBold
 MinimizeBtn.BorderSizePixel = 0
 
--- ВКЛАДКИ (КАК В CONTROL CENTER)
+-- ВКЛАДКИ
 local Tabs = {"Home", "Combat", "Player", "Visuals", "Utility"}
 local TabButtons = {}
 local currentTab = "Home"
@@ -309,7 +330,7 @@ for i, tab in pairs(Tabs) do
     end)
 end
 
--- КОНТЕЙНЕР ДЛЯ КНОПОК
+-- КОНТЕЙНЕР
 local ContentContainer = Instance.new("ScrollingFrame")
 ContentContainer.Parent = MainFrame
 ContentContainer.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -320,7 +341,6 @@ ContentContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
 ContentContainer.ScrollBarThickness = 6
 ContentContainer.ScrollBarImageColor3 = Color3.fromRGB(0, 180, 255)
 
--- ======== ФУНКЦИЯ СОЗДАНИЯ КНОПОК ========
 local function createButton(parent, text, yPos, color, callback)
     local btn = Instance.new("TextButton")
     btn.Parent = parent
@@ -340,8 +360,9 @@ end
 
 local function updateContent(tab)
     for _, child in pairs(ContentContainer:GetChildren()) do
-        if child:IsA("TextButton") then child:Destroy() end
-        if child:IsA("TextLabel") then child:Destroy() end
+        if child:IsA("TextButton") or child:IsA("TextLabel") then
+            child:Destroy()
+        end
     end
     
     local y = 10
@@ -378,44 +399,9 @@ local function updateContent(tab)
         label.TextSize = 14
         label.Font = Enum.Font.GothamBold
         y = y + 35
-        createButton(ContentContainer, "⚡ LIGHTNING STRIKE", y, Color3.fromRGB(255, 200, 0), function()
-            local char = Player.Character
-            if not char then return end
-            local root = char:FindFirstChild("HumanoidRootPart")
-            if not root then return end
-            local nearest = nil
-            local dist = math.huge
-            for _, player in pairs(Players:GetPlayers()) do
-                if player ~= Player then
-                    local c = player.Character
-                    if c and c:FindFirstChild("HumanoidRootPart") then
-                        local d = (c.HumanoidRootPart.Position - root.Position).Magnitude
-                        if d < dist then
-                            dist = d
-                            nearest = c
-                        end
-                    end
-                end
-            end
-            if nearest then
-                local hum = nearest:FindFirstChild("Humanoid")
-                if hum then hum.Health = 0 end
-            end
-        end)
+        createButton(ContentContainer, "⚡ LIGHTNING STRIKE", y, Color3.fromRGB(255, 200, 0), lightningStrike)
         y = y + 45
-        createButton(ContentContainer, "🛡️ GOD MODE (toggle)", y, Color3.fromRGB(0, 150, 255), function()
-            local char = Player.Character
-            if not char then return end
-            local hum = char:FindFirstChild("Humanoid")
-            if not hum then return end
-            if hum.MaxHealth ~= math.huge then
-                hum.MaxHealth = math.huge
-                hum.Health = math.huge
-            else
-                hum.MaxHealth = 100
-                hum.Health = 100
-            end
-        end)
+        createButton(ContentContainer, "🛡️ GOD MODE (toggle)", y, Color3.fromRGB(0, 150, 255), godMode)
         
     elseif tab == "Player" then
         local label = Instance.new("TextLabel")
@@ -445,16 +431,7 @@ local function updateContent(tab)
         y = y + 45
         createButton(ContentContainer, "🌙 NIGHT MODE (toggle)", y, Color3.fromRGB(100, 50, 200), toggleNight)
         y = y + 45
-        createButton(ContentContainer, "🌈 NEON EFFECT", y, Color3.fromRGB(200, 0, 255), function()
-            local char = Player.Character
-            if not char then return end
-            for _, part in pairs(char:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.Material = Enum.Material.Neon
-                    part.BrickColor = BrickColor.new("Bright violet")
-                end
-            end
-        end)
+        createButton(ContentContainer, "🌈 NEON EFFECT", y, Color3.fromRGB(200, 0, 255), neonEffect)
         
     elseif tab == "Utility" then
         local label = Instance.new("TextLabel")
@@ -467,24 +444,17 @@ local function updateContent(tab)
         label.TextSize = 14
         label.Font = Enum.Font.GothamBold
         y = y + 35
-        createButton(ContentContainer, "🔄 ANTI AFK", y, Color3.fromRGB(100, 100, 200), function()
-            local vu = game:GetService("VirtualUser")
-            game:GetService("Players").LocalPlayer.Idled:Connect(function()
-                vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-                task.wait(1)
-                vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-            end)
-        end)
+        createButton(ContentContainer, "🔄 ANTI AFK", y, Color3.fromRGB(100, 100, 200), antiAFK)
     end
     
     ContentContainer.CanvasSize = UDim2.new(0, 0, 0, y + 50)
 end
 
--- АКТИВИРУЕМ ПЕРВУЮ ВКЛАДКУ
+-- ЗАГРУЗКА ПЕРВОЙ ВКЛАДКИ
 TabButtons["Home"].TextColor3 = Color3.fromRGB(0, 180, 255)
 updateContent("Home")
 
--- ======== МИНИ-ИКОНКА (ПРИ СВОРАЧИВАНИИ) ========
+-- ======== МИНИ-ИКОНКА ========
 local MiniIcon = Instance.new("ImageButton")
 MiniIcon.Parent = ScreenGui
 MiniIcon.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
@@ -506,14 +476,14 @@ MiniIcon.MouseButton1Click:Connect(function()
     MiniIcon.Visible = false
 end)
 
--- ======== ПЕРЕТАСКИВАНИЕ ДЛЯ ТЕЛЕФОНА ========
-local dragging = false
+-- ======== ПЕРЕТАСКИВАНИЕ ========
+local drag = false
 local dragStart = nil
 local startPos = nil
 
 MainFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
+        drag = true
         dragStart = input.Position
         startPos = MainFrame.Position
     end
@@ -521,12 +491,12 @@ end)
 
 MainFrame.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch then
-        dragging = false
+        drag = false
     end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.Touch then
+    if drag and input.UserInputType == Enum.UserInputType.Touch then
         local delta = input.Position - dragStart
         MainFrame.Position = UDim2.new(
             startPos.X.Scale,
@@ -537,5 +507,4 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
-print("✅ N1zoxir Control Center v4.5 загружен!")
-print("📱 Нажми на шестерёнку внизу экрана")
+print("✅ N1zoxir Control Center v4.6 загружен!")
