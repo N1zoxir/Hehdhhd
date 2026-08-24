@@ -246,7 +246,7 @@ task.spawn(function()
     -- ОПТИМИЗИРОВАННЫЙ ФУНКЦИОНАЛ
     -- ========================================================
 
-    -- 1. ESP Игроков (Оптимизировано через раздачу раз в секунду)
+    -- 1. ESP Игроков
     local espEnabled = false
     CreateToggle("ESP Игроков", function(state)
         espEnabled = state
@@ -276,11 +276,11 @@ task.spawn(function()
                     end
                 end
             end
-            task.scream or task.wait(1) -- Проверка раз в секунду вместо каждого кадра
+            task.wait(1)
         end
     end)
 
-    -- 2. ESP Принтеров (Оптимизировано)
+    -- 2. ESP Принтеров
     local printerEspEnabled = false
     local printerHighlights = {}
     CreateToggle("ESP Принтеров (Деньги)", function(state)
@@ -315,7 +315,7 @@ task.spawn(function()
         end
     end)
 
-    -- 3. ESP Машин (Оптимизировано)
+    -- 3. ESP Машин
     local carEspEnabled = false
     local carHighlights = {}
     CreateToggle("ESP Машин", function(state)
@@ -388,7 +388,7 @@ task.spawn(function()
         end
     end)
 
-    -- 5. China Hat (Исправленный компактный размер шляпы)
+    -- 5. China Hat (Компактная шляпа)
     local chinaHatEnabled = false
     CreateToggle("China Hat (Шляпа)", function(state)
         chinaHatEnabled = state
@@ -399,7 +399,7 @@ task.spawn(function()
             if not head:FindFirstChild("SD_ChinaHat") then
                 local hatPart = Instance.new("Part")
                 hatPart.Name = "SD_ChinaHat"
-                hatPart.Size = Vector3.new(2, 0.4, 2) -- Уменьшенный размер
+                hatPart.Size = Vector3.new(2, 0.4, 2)
                 hatPart.CFrame = head.CFrame + Vector3.new(0, 1, 0)
                 hatPart.Color = Color3.fromRGB(240, 230, 210)
                 hatPart.Material = Enum.Material.SmoothPlastic
@@ -409,7 +409,7 @@ task.spawn(function()
                 local mesh = Instance.new("SpecialMesh")
                 mesh.MeshType = Enum.MeshType.FileMesh
                 mesh.MeshId = "rbxassetid://1033714"
-                mesh.Scale = Vector3.new(2.2, 0.8, 2.2) -- Компактный масштаб под голову
+                mesh.Scale = Vector3.new(2.2, 0.8, 2.2)
                 mesh.Parent = hatPart
 
                 local weld = Instance.new("WeldConstraint")
@@ -426,7 +426,7 @@ task.spawn(function()
         end
     end)
 
-    -- 6. Purple Sky (Новая функция — фиолетовое небо)
+    -- 6. Purple Sky (Фиолетовое небо)
     CreateToggle("Purple Sky (Фиолетовое небо)", function(state)
         if state then
             Lighting.Ambient = Color3.fromRGB(90, 50, 120)
@@ -485,7 +485,6 @@ task.spawn(function()
     local function OpenMenu()
         if openDragging then return end
         
-        -- Меню открывается точно в месте, куда перетащили квадрат «X»
         MainFrame.Position = OpenButton.Position
 
         TweenService:Create(OpenButton, TweenInfo.new(0.15), {Size = UDim2.new(0, 0, 0, 0)}):Play()
