@@ -1,4 +1,4 @@
--- [[ San Diego | Visual Hub (Optimized & Fixed) ]] --
+-- [[ San Diego | Visual Hub (Full Features + Auto Monalis Farm) ]] --
 task.spawn(function()
     local Players = game:GetService("Players")
     local TweenService = game:GetService("TweenService")
@@ -54,15 +54,15 @@ task.spawn(function()
     OpenCorner.Parent = OpenButton
 
     local OpenStroke = Instance.new("UIStroke")
-    OpenStroke.Color = Color3.fromRGB(0, 170, 255) -- Синяя обводка
+    OpenStroke.Color = Color3.fromRGB(0, 170, 255)
     OpenStroke.Thickness = 2
     OpenStroke.Parent = OpenButton
 
-    -- Главное окно меню (Изначально скрыто)
+    -- Главное окно меню
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 0, 0, 0)
-    MainFrame.Position = UDim2.new(0.5, -220, 0.5, -160)
+    MainFrame.Position = UDim2.new(0.5, -250, 0.5, -180)
     MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
     MainFrame.BorderSizePixel = 0
     MainFrame.Visible = false
@@ -78,7 +78,7 @@ task.spawn(function()
     UIStroke.Thickness = 1.5
     UIStroke.Parent = MainFrame
 
-    -- Шапка окна (с перетаскиванием)
+    -- Шапка окна
     local TopBar = Instance.new("Frame")
     TopBar.Size = UDim2.new(1, 0, 0, 45)
     TopBar.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
@@ -101,7 +101,7 @@ task.spawn(function()
     Title.Size = UDim2.new(1, -50, 1, 0)
     Title.Position = UDim2.new(0, 15, 0, 0)
     Title.BackgroundTransparency = 1
-    Title.Text = "SAN DIEGO — Visuals Hub"
+    Title.Text = "SAN DIEGO — Hub"
     Title.TextColor3 = Color3.fromRGB(240, 240, 255)
     Title.TextSize = 15
     Title.Font = Enum.Font.GothamBold
@@ -168,29 +168,91 @@ task.spawn(function()
         end
     end)
 
-    -- Контейнер для функций (Список)
-    local ContentContainer = Instance.new("ScrollingFrame")
-    ContentContainer.Size = UDim2.new(1, -20, 1, -60)
-    ContentContainer.Position = UDim2.new(0, 10, 0, 50)
-    ContentContainer.BackgroundTransparency = 1
-    ContentContainer.BorderSizePixel = 0
-    ContentContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-    ContentContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    ContentContainer.ScrollBarThickness = 3
-    ContentContainer.Parent = MainFrame
+    -- Система вкладкок (Tab System)
+    local TabContainer = Instance.new("Frame")
+    TabContainer.Size = UDim2.new(1, -20, 0, 35)
+    TabContainer.Position = UDim2.new(0, 10, 0, 50)
+    TabContainer.BackgroundTransparency = 1
+    TabContainer.Parent = MainFrame
 
-    local UIList = Instance.new("UIListLayout")
-    UIList.SortOrder = Enum.SortOrder.LayoutOrder
-    UIList.Padding = UDim.new(0, 8)
-    UIList.Parent = ContentContainer
+    local TabListLayout = Instance.new("UIListLayout")
+    TabListLayout.FillDirection = Enum.FillDirection.Horizontal
+    TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    TabListLayout.Padding = UDim.new(0, 6)
+    TabListLayout.Parent = TabContainer
 
-    -- Функция создания переключателей
-    local function CreateToggle(name, callback)
+    local PagesContainer = Instance.new("Frame")
+    PagesContainer.Size = UDim2.new(1, -20, 1, -95)
+    PagesContainer.Position = UDim2.new(0, 10, 0, 90)
+    PagesContainer.BackgroundTransparency = 1
+    PagesContainer.Parent = MainFrame
+
+    local pages = {}
+    local currentTabBtn = nil
+
+    local function CreateTab(name)
+        local TabBtn = Instance.new("TextButton")
+        TabBtn.Size = UDim2.new(0, 90, 1, 0)
+        TabBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
+        TabBtn.Text = name
+        TabBtn.TextColor3 = Color3.fromRGB(150, 150, 170)
+        TabBtn.TextSize = 13
+        TabBtn.Font = Enum.Font.GothamMedium
+        TabBtn.Parent = TabContainer
+
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 6)
+        corner.Parent = TabBtn
+
+        local Page = Instance.new("ScrollingFrame")
+        Page.Size = UDim2.new(1, 0, 1, 0)
+        Page.BackgroundTransparency = 1
+        Page.BorderSizePixel = 0
+        Page.Visible = false
+        Page.CanvasSize = UDim2.new(0, 0, 0, 0)
+        Page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        Page.ScrollBarThickness = 3
+        Page.Parent = PagesContainer
+
+        local pageLayout = Instance.new("UIListLayout")
+        pageLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        pageLayout.Padding = UDim.new(0, 8)
+        pageLayout.Parent = Page
+
+        pages[name] = Page
+
+        TabBtn.MouseButton1Click:Connect(function()
+            for _, p in pairs(pages) do p.Visible = false end
+            Page.Visible = true
+
+            if currentTabBtn then
+                TweenService:Create(currentTabBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(28, 28, 38), TextColor3 = Color3.fromRGB(150, 150, 170)}):Play()
+            end
+            TweenService:Create(TabBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 170, 255), TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+            currentTabBtn = TabBtn
+        end)
+
+        if not currentTabBtn then
+            Page.Visible = true
+            TabBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+            TabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            currentTabBtn = TabBtn
+        end
+
+        return Page
+    end
+
+    -- Создаем вкладки: Farm и Visuals
+    local FarmPage = CreateTab("Farm")
+    local VisualsPage = CreateTab("Visuals")
+
+    -- Функция создания переключателей в нужную страницу
+    local function CreateToggle(parentPage, name, callback)
         local ToggleFrame = Instance.new("Frame")
         ToggleFrame.Size = UDim2.new(1, 0, 0, 40)
         ToggleFrame.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
         ToggleFrame.BorderSizePixel = 0
-        ToggleFrame.Parent = ContentContainer
+        ToggleFrame.Parent = parentPage
 
         local Corner = Instance.new("UICorner")
         Corner.CornerRadius = UDim.new(0, 6)
@@ -243,12 +305,57 @@ task.spawn(function()
     end
 
     -- ========================================================
-    -- ФУНКЦИОНАЛ
+    -- ВКЛАДКА FARM: AUTO MONALIS
+    -- ========================================================
+    local autoMonalisEnabled = false
+    CreateToggle(FarmPage, "Auto Monalis (Автофарм картин)", function(state)
+        autoMonalisEnabled = state
+    end)
+
+    -- Поток фарма (Покупка картин и сдача контрабанды по точкам)
+    task.spawn(function()
+        while true do
+            if autoMonalisEnabled then
+                pcall(function()
+                    local char = LocalPlayer.Character
+                    local root = char and char:FindFirstChild("HumanoidRootPart")
+                    if root then
+                        -- 1. Идем к месту покупки картин (Магазин/Столы с Моной Лизой)
+                        -- Позиции можно адаптировать под конкретные координаты твоей игры или телепорт
+                        for _, obj in ipairs(workspace:GetDescendants()) do
+                            if obj:IsA("ProximityPrompt") and string.match(string.lower(obj.Parent.Name), "mona") or (obj.ActionText and string.match(string.lower(obj.ActionText), "мона лиз")) then
+                                root.CFrame = obj.Parent.CFrame + Vector3.new(0, 3, 0)
+                                task.wait(0.5)
+                                fireproximityprompt(obj)
+                                task.wait(0.5)
+                            end
+                        end
+
+                        -- 2. Едем к точке сдачи контрабанды (Гараж / Продавец)
+                        task.wait(1)
+                        for _, obj in ipairs(workspace:GetDescendants()) do
+                            if obj:IsA("ProximityPrompt") and (string.match(string.lower(obj.ActionText), "продать") or string.match(string.lower(obj.Parent.Name), "sell")) then
+                                root.CFrame = obj.Parent.CFrame + Vector3.new(0, 3, 0)
+                                task.wait(0.5)
+                                fireproximityprompt(obj)
+                                task.wait(0.5)
+                            end
+                        end
+                    end
+                end)
+            end
+            task.wait(2)
+        end
+    end)
+
+
+    -- ========================================================
+    -- ВКЛАДКА VISUALS (ВСЕ ФУНКЦИИ ВИЗУАЛА)
     -- ========================================================
 
     -- 1. ESP Игроков
     local espEnabled = false
-    CreateToggle("ESP Игроков", function(state)
+    CreateToggle(VisualsPage, "ESP Игроков", function(state)
         espEnabled = state
         if not espEnabled then
             for _, player in ipairs(Players:GetPlayers()) do
@@ -283,7 +390,7 @@ task.spawn(function()
     -- 2. ESP Принтеров
     local printerEspEnabled = false
     local printerHighlights = {}
-    CreateToggle("ESP Принтеров (Деньги)", function(state)
+    CreateToggle(VisualsPage, "ESP Принтеров (Деньги)", function(state)
         printerEspEnabled = state
         if not printerEspEnabled then
             for _, h in pairs(printerHighlights) do
@@ -318,7 +425,7 @@ task.spawn(function()
     -- 3. ESP Машин
     local carEspEnabled = false
     local carHighlights = {}
-    CreateToggle("ESP Машин", function(state)
+    CreateToggle(VisualsPage, "ESP Машин", function(state)
         carEspEnabled = state
         if not carEspEnabled then
             for _, h in pairs(carHighlights) do
@@ -332,7 +439,7 @@ task.spawn(function()
         while true do
             if carEspEnabled then
                 for _, obj in ipairs(workspace:GetDescendants()) do
-                    if obj:IsA("Model") and (obj:FindFirstChild("Steering") or obj:FindFirstChild("Wheels") or string.match(string.lower(obj.Name), "car") or string.match(string.lower(obj.Name), "vehicle") or string.match(string.lower(obj.Name), "automobile")) then
+                    if obj:IsA("Model") and (obj:FindFirstChild("Steering") or obj:FindFirstChild("Wheels") or string.match(string.lower(obj.Name), "car") or string.match(string.lower(obj.Name), "vehicle")) then
                         if not carHighlights[obj] then
                             local hl = Instance.new("Highlight")
                             hl.Name = "SD_CarESP"
@@ -350,9 +457,9 @@ task.spawn(function()
         end
     end)
 
-    -- 4. Trails (Шлейф)
+    -- 4. Trails
     local trailsEnabled = false
-    CreateToggle("Trails (Шлейф за игроком)", function(state)
+    CreateToggle(VisualsPage, "Trails (Шлейф за игроком)", function(state)
         trailsEnabled = state
         local char = LocalPlayer.Character
         local rootPart = char and char:FindFirstChild("HumanoidRootPart")
@@ -388,9 +495,9 @@ task.spawn(function()
         end
     end)
 
-    -- 5. China Hat (Шляпа)
+    -- 5. China Hat
     local chinaHatEnabled = false
-    CreateToggle("China Hat (Шляпа)", function(state)
+    CreateToggle(VisualsPage, "China Hat (Шляпа)", function(state)
         chinaHatEnabled = state
         local char = LocalPlayer.Character
         local head = char and char:FindFirstChild("Head")
@@ -426,8 +533,8 @@ task.spawn(function()
         end
     end)
 
-    -- 6. Invisible Player (Невидимка только для себя)
-    CreateToggle("Invisible Player (Невидимка)", function(state)
+    -- 6. Invisible Player
+    CreateToggle(VisualsPage, "Invisible Player (Невидимка)", function(state)
         local char = LocalPlayer.Character
         if char then
             for _, part in ipairs(char:GetDescendants()) do
@@ -442,9 +549,9 @@ task.spawn(function()
         end
     end)
 
-    -- 7. Aura (Красные эффекты возле туловища)
+    -- 7. Aura
     local auraEnabled = false
-    CreateToggle("Aura (Красные эффекты)", function(state)
+    CreateToggle(VisualsPage, "Aura (Красные эффекты)", function(state)
         auraEnabled = state
         local char = LocalPlayer.Character
         local torso = char and (char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso"))
@@ -455,7 +562,7 @@ task.spawn(function()
                 emitter.Name = "SD_AuraEmitter"
                 emitter.Color = ColorSequence.new(Color3.fromRGB(255, 30, 30))
                 emitter.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.5), NumberSequenceKeypoint.new(1, 1.2)})
-                emitter.Texture = "rbxassetid://258125463" -- Мягкая точка
+                emitter.Texture = "rbxassetid://258125463"
                 emitter.Lifetime = NumberRange.new(0.5, 1)
                 emitter.Rate = 25
                 emitter.Speed = NumberRange.new(2, 4)
@@ -470,8 +577,8 @@ task.spawn(function()
         end
     end)
 
-    -- 8. Purple Sky (Фиолетовое небо)
-    CreateToggle("Purple Sky (Фиолетовое небо)", function(state)
+    -- 8. Purple Sky
+    CreateToggle(VisualsPage, "Purple Sky (Фиолетовое небо)", function(state)
         if state then
             Lighting.Ambient = Color3.fromRGB(90, 50, 120)
             Lighting.OutdoorAmbient = Color3.fromRGB(120, 80, 150)
@@ -485,29 +592,6 @@ task.spawn(function()
         end
     end)
 
-    -- 9. Night Mode
-    CreateToggle("Night Mode (Ночь)", function(state)
-        if state then
-            Lighting.ClockTime = 0
-            Lighting.Brightness = 0
-            Lighting.Ambient = Color3.fromRGB(15, 15, 25)
-        else
-            Lighting.ClockTime = 14
-            Lighting.Brightness = 2
-            Lighting.Ambient = Color3.fromRGB(120, 120, 120)
-        end
-    end)
-
-    -- 10. Fullbright
-    CreateToggle("Fullbright (Яркий свет)", function(state)
-        if state then
-            Lighting.GlobalShadows = false
-            Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
-        else
-            Lighting.GlobalShadows = true
-            Lighting.OutdoorAmbient = Color3.fromRGB(120, 120, 120)
-        end
-    end)
 
     -- ========================================================
     -- АНИМАЦИИ ОТКРЫТИЯ ИЗ ПОЗИЦИИ КВАДРАТА «X»
@@ -529,7 +613,6 @@ task.spawn(function()
     local function OpenMenu()
         if openDragging then return end
         
-        -- Устанавливаем позицию меню точно туда, куда перетащили квадрат
         MainFrame.Position = OpenButton.Position
 
         TweenService:Create(OpenButton, TweenInfo.new(0.15), {Size = UDim2.new(0, 0, 0, 0)}):Play()
