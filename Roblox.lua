@@ -1,4 +1,4 @@
--- [[ San Diego | Visual Hub (Full Features + Auto Monalis Farm) ]] --
+-- [[ San Diego | Visual Hub (Full Features + Auto Monalis Farm + Money Wash + Speed) ]] --
 task.spawn(function()
     local Players = game:GetService("Players")
     local TweenService = game:GetService("TweenService")
@@ -36,7 +36,7 @@ task.spawn(function()
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.ResetOnSpawn = false
 
-    -- Кнопка открытия (Маленький квадрат "X" с синей обводкой)
+    -- Кнопка открытия
     local OpenButton = Instance.new("TextButton")
     OpenButton.Name = "OpenButton"
     OpenButton.Size = UDim2.new(0, 45, 0, 45)
@@ -168,7 +168,7 @@ task.spawn(function()
         end
     end)
 
-    -- Система вкладкок (Tab System)
+    -- Система вкладок
     local TabContainer = Instance.new("Frame")
     TabContainer.Size = UDim2.new(1, -20, 0, 35)
     TabContainer.Position = UDim2.new(0, 10, 0, 50)
@@ -242,11 +242,10 @@ task.spawn(function()
         return Page
     end
 
-    -- Создаем вкладки: Farm и Visuals
     local FarmPage = CreateTab("Farm")
     local VisualsPage = CreateTab("Visuals")
 
-    -- Функция создания переключателей в нужную страницу
+    -- Функция переключателя
     local function CreateToggle(parentPage, name, callback)
         local ToggleFrame = Instance.new("Frame")
         ToggleFrame.Size = UDim2.new(1, 0, 0, 40)
@@ -305,38 +304,56 @@ task.spawn(function()
     end
 
     -- ========================================================
-    -- ВКЛАДКА FARM: AUTO MONALIS
+    -- ВКЛАДКА FARM: AUTO MONALIS (ПОКУПКА -> СДАЧА -> ОТМЫВКА)
     -- ========================================================
     local autoMonalisEnabled = false
-    CreateToggle(FarmPage, "Auto Monalis (Автофарм картин)", function(state)
+    local buyAmount = 5 -- Количество покупок за один заход
+
+    CreateToggle(FarmPage, "Auto Monalis (Фарм + Сдача + Отмывка)", function(state)
         autoMonalisEnabled = state
     end)
 
-    -- Поток фарма (Покупка картин и сдача контрабанды по точкам)
+    -- Основной поток точного маршрута
     task.spawn(function()
+        local posBuy = Vector3.new(6807.84, 17.38, 24.93)
+        local posSell = Vector3.new(-78.81, 49.21, 432.97)
+        local posWash = Vector3.new(6809.42, 17.40, -38.19)
+
         while true do
             if autoMonalisEnabled then
                 pcall(function()
                     local char = LocalPlayer.Character
                     local root = char and char:FindFirstChild("HumanoidRootPart")
                     if root then
-                        -- 1. Идем к месту покупки картин (Магазин/Столы с Моной Лизой)
-                        -- Позиции можно адаптировать под конкретные координаты твоей игры или телепорт
+                        -- 1. Идем покупать картины (количество задано переменной)
+                        root.CFrame = CFrame.new(posBuy)
+                        task.wait(0.6)
+                        for i = 1, buyAmount do
+                            for _, obj in ipairs(workspace:GetDescendants()) do
+                                if obj:IsA("ProximityPrompt") and (string.match(string.lower(obj.ActionText), "мона лиз") or string.match(string.lower(obj.Parent.Name), "mona")) then
+                                    fireproximityprompt(obj)
+                                    task.wait(0.4)
+                                end
+                            end
+                        end
+
+                        -- 2. Едем/Идем сдавать контрабанду
+                        task.wait(0.5)
+                        root.CFrame = CFrame.new(posSell)
+                        task.wait(0.8)
                         for _, obj in ipairs(workspace:GetDescendants()) do
-                            if obj:IsA("ProximityPrompt") and string.match(string.lower(obj.Parent.Name), "mona") or (obj.ActionText and string.match(string.lower(obj.ActionText), "мона лиз")) then
-                                root.CFrame = obj.Parent.CFrame + Vector3.new(0, 3, 0)
-                                task.wait(0.5)
+                            if obj:IsA("ProximityPrompt") and (string.match(string.lower(obj.ActionText), "продать") or string.match(string.lower(obj.Parent.Name), "sell")) then
                                 fireproximityprompt(obj)
                                 task.wait(0.5)
                             end
                         end
 
-                        -- 2. Едем к точке сдачи контрабанды (Гараж / Продавец)
-                        task.wait(1)
+                        -- 3. Идем отмывать деньги
+                        task.wait(0.5)
+                        root.CFrame = CFrame.new(posWash)
+                        task.wait(0.8)
                         for _, obj in ipairs(workspace:GetDescendants()) do
-                            if obj:IsA("ProximityPrompt") and (string.match(string.lower(obj.ActionText), "продать") or string.match(string.lower(obj.Parent.Name), "sell")) then
-                                root.CFrame = obj.Parent.CFrame + Vector3.new(0, 3, 0)
-                                task.wait(0.5)
+                            if obj:IsA("ProximityPrompt") and (string.match(string.lower(obj.ActionText), "отмыть") or string.match(string.lower(obj.Parent.Name), "wash")) then
                                 fireproximityprompt(obj)
                                 task.wait(0.5)
                             end
@@ -344,13 +361,13 @@ task.spawn(function()
                     end
                 end)
             end
-            task.wait(2)
+            task.wait(3)
         end
     end)
 
 
     -- ========================================================
-    -- ВКЛАДКА VISUALS (ВСЕ ФУНКЦИИ ВИЗУАЛА)
+    -- ВКЛАДКА VISUALS
     -- ========================================================
 
     -- 1. ESP Игроков
@@ -393,9 +410,7 @@ task.spawn(function()
     CreateToggle(VisualsPage, "ESP Принтеров (Деньги)", function(state)
         printerEspEnabled = state
         if not printerEspEnabled then
-            for _, h in pairs(printerHighlights) do
-                if h then h:Destroy() end
-            end
+            for _, h in pairs(printerHighlights) do if h then h:Destroy() end end
             printerHighlights = {}
         end
     end)
@@ -428,9 +443,7 @@ task.spawn(function()
     CreateToggle(VisualsPage, "ESP Машин", function(state)
         carEspEnabled = state
         if not carEspEnabled then
-            for _, h in pairs(carHighlights) do
-                if h then h:Destroy() end
-            end
+            for _, h in pairs(carHighlights) do if h then h:Destroy() end end
             carHighlights = {}
         end
     end)
@@ -458,32 +471,26 @@ task.spawn(function()
     end)
 
     -- 4. Trails
-    local trailsEnabled = false
     CreateToggle(VisualsPage, "Trails (Шлейф за игроком)", function(state)
-        trailsEnabled = state
         local char = LocalPlayer.Character
         local rootPart = char and char:FindFirstChild("HumanoidRootPart")
-
-        if trailsEnabled and rootPart then
+        if state and rootPart then
             if not rootPart:FindFirstChild("SD_Trail") then
-                local attachment0 = Instance.new("Attachment", rootPart)
-                attachment0.Name = "TrailAtt0"
-                attachment0.Position = Vector3.new(0, 1, 0)
-
-                local attachment1 = Instance.new("Attachment", rootPart)
-                attachment1.Name = "TrailAtt1"
-                attachment1.Position = Vector3.new(0, -1, 0)
-
+                local att0 = Instance.new("Attachment", rootPart)
+                att0.Name = "TrailAtt0"
+                att0.Position = Vector3.new(0, 1, 0)
+                local att1 = Instance.new("Attachment", rootPart)
+                att1.Name = "TrailAtt1"
+                att1.Position = Vector3.new(0, -1, 0)
                 local trail = Instance.new("Trail")
                 trail.Name = "SD_Trail"
-                trail.Attachment0 = attachment0
-                trail.Attachment1 = attachment1
+                trail.Attachment0 = att0
+                trail.Attachment1 = att1
                 trail.Color = ColorSequence.new({
                     ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 170, 255)),
                     ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 255))
                 })
                 trail.Lifetime = 0.8
-                trail.MinLength = 0.1
                 trail.Parent = rootPart
             end
         else
@@ -496,40 +503,28 @@ task.spawn(function()
     end)
 
     -- 5. China Hat
-    local chinaHatEnabled = false
     CreateToggle(VisualsPage, "China Hat (Шляпа)", function(state)
-        chinaHatEnabled = state
         local char = LocalPlayer.Character
         local head = char and char:FindFirstChild("Head")
-
-        if chinaHatEnabled and head then
+        if state and head then
             if not head:FindFirstChild("SD_ChinaHat") then
                 local hatPart = Instance.new("Part")
                 hatPart.Name = "SD_ChinaHat"
                 hatPart.Size = Vector3.new(2, 0.4, 2)
-                hatPart.CFrame = head.CFrame + Vector3.new(0, 1, 0)
                 hatPart.Color = Color3.fromRGB(240, 230, 210)
-                hatPart.Material = Enum.Material.SmoothPlastic
                 hatPart.CanCollide = false
                 hatPart.Massless = true
-
-                local mesh = Instance.new("SpecialMesh")
+                local mesh = Instance.new("SpecialMesh", hatPart)
                 mesh.MeshType = Enum.MeshType.FileMesh
                 mesh.MeshId = "rbxassetid://1033714"
                 mesh.Scale = Vector3.new(2.2, 0.8, 2.2)
-                mesh.Parent = hatPart
-
-                local weld = Instance.new("WeldConstraint")
+                local weld = Instance.new("WeldConstraint", hatPart)
                 weld.Part0 = head
                 weld.Part1 = hatPart
-                weld.Parent = hatPart
-
                 hatPart.Parent = head
             end
         else
-            if head and head:FindFirstChild("SD_ChinaHat") then
-                head.SD_ChinaHat:Destroy()
-            end
+            if head and head:FindFirstChild("SD_ChinaHat") then head.SD_ChinaHat:Destroy() end
         end
     end)
 
@@ -539,26 +534,19 @@ task.spawn(function()
         if char then
             for _, part in ipairs(char:GetDescendants()) do
                 if part:IsA("BasePart") or part:IsA("Decal") then
-                    if state then
-                        part.LocalTransparencyModifier = 1
-                    else
-                        part.LocalTransparencyModifier = 0
-                    end
+                    part.LocalTransparencyModifier = state and 1 or 0
                 end
             end
         end
     end)
 
     -- 7. Aura
-    local auraEnabled = false
     CreateToggle(VisualsPage, "Aura (Красные эффекты)", function(state)
-        auraEnabled = state
         local char = LocalPlayer.Character
         local torso = char and (char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso"))
-
-        if auraEnabled and torso then
+        if state and torso then
             if not torso:FindFirstChild("SD_AuraEmitter") then
-                local emitter = Instance.new("ParticleEmitter")
+                local emitter = Instance.new("ParticleEmitter", torso)
                 emitter.Name = "SD_AuraEmitter"
                 emitter.Color = ColorSequence.new(Color3.fromRGB(255, 30, 30))
                 emitter.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.5), NumberSequenceKeypoint.new(1, 1.2)})
@@ -566,14 +554,9 @@ task.spawn(function()
                 emitter.Lifetime = NumberRange.new(0.5, 1)
                 emitter.Rate = 25
                 emitter.Speed = NumberRange.new(2, 4)
-                emitter.SpreadAngle = Vector2.new(360, 360)
-                emitter.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.2), NumberSequenceKeypoint.new(1, 1)})
-                emitter.Parent = torso
             end
         else
-            if torso and torso:FindFirstChild("SD_AuraEmitter") then
-                torso.SD_AuraEmitter:Destroy()
-            end
+            if torso and torso:FindFirstChild("SD_AuraEmitter") then torso.SD_AuraEmitter:Destroy() end
         end
     end)
 
@@ -593,10 +576,7 @@ task.spawn(function()
     end)
 
 
-    -- ========================================================
-    -- АНИМАЦИИ ОТКРЫТИЯ ИЗ ПОЗИЦИИ КВАДРАТА «X»
-    -- ========================================================
-
+    -- Анимация меню
     local function CloseMenu()
         OpenButton.Position = MainFrame.Position
         local tween = TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1})
@@ -612,9 +592,7 @@ task.spawn(function()
 
     local function OpenMenu()
         if openDragging then return end
-        
         MainFrame.Position = OpenButton.Position
-
         TweenService:Create(OpenButton, TweenInfo.new(0.15), {Size = UDim2.new(0, 0, 0, 0)}):Play()
         task.wait(0.1)
         OpenButton.Visible = false
