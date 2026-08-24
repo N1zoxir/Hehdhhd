@@ -1,4 +1,4 @@
--- [[ San Diego | Visual Hub (Full Features + New Visuals: Cars, Trails, China Hat) ]] --
+-- [[ San Diego | Visual Hub (Optimized & Fixed) ]] --
 task.spawn(function()
     local Players = game:GetService("Players")
     local TweenService = game:GetService("TweenService")
@@ -36,7 +36,7 @@ task.spawn(function()
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.ResetOnSpawn = false
 
-    -- Кнопка открытия (Маленький квадрат "X")
+    -- Кнопка открытия (Маленький квадрат "X" с синей обводкой)
     local OpenButton = Instance.new("TextButton")
     OpenButton.Name = "OpenButton"
     OpenButton.Size = UDim2.new(0, 45, 0, 45)
@@ -54,8 +54,8 @@ task.spawn(function()
     OpenCorner.Parent = OpenButton
 
     local OpenStroke = Instance.new("UIStroke")
-    OpenStroke.Color = Color3.fromRGB(0, 170, 255)
-    OpenStroke.Thickness = 1.5
+    OpenStroke.Color = Color3.fromRGB(0, 170, 255) -- Синяя обводка
+    OpenStroke.Thickness = 2
     OpenStroke.Parent = OpenButton
 
     -- Главное окно меню (Изначально скрыто)
@@ -243,10 +243,10 @@ task.spawn(function()
     end
 
     -- ========================================================
-    -- ФУНКЦИОНАЛ (СТАРЫЕ + НОВЫЕ ФУНКЦИИ)
+    -- ОПТИМИЗИРОВАННЫЙ ФУНКЦИОНАЛ
     -- ========================================================
 
-    -- 1. ESP Игроков
+    -- 1. ESP Игроков (Оптимизировано через раздачу раз в секунду)
     local espEnabled = false
     CreateToggle("ESP Игроков", function(state)
         espEnabled = state
@@ -259,25 +259,28 @@ task.spawn(function()
         end
     end)
 
-    RunService.RenderStepped:Connect(function()
-        if espEnabled then
-            for _, player in ipairs(Players:GetPlayers()) do
-                if player ~= LocalPlayer and player.Character then
-                    if not player.Character:FindFirstChild("SD_PlayerESP") then
-                        local hl = Instance.new("Highlight")
-                        hl.Name = "SD_PlayerESP"
-                        hl.Adornee = player.Character
-                        hl.FillColor = Color3.fromRGB(255, 60, 60)
-                        hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-                        hl.FillTransparency = 0.5
-                        hl.Parent = player.Character
+    task.spawn(function()
+        while true do
+            if espEnabled then
+                for _, player in ipairs(Players:GetPlayers()) do
+                    if player ~= LocalPlayer and player.Character then
+                        if not player.Character:FindFirstChild("SD_PlayerESP") then
+                            local hl = Instance.new("Highlight")
+                            hl.Name = "SD_PlayerESP"
+                            hl.Adornee = player.Character
+                            hl.FillColor = Color3.fromRGB(255, 60, 60)
+                            hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                            hl.FillTransparency = 0.5
+                            hl.Parent = player.Character
+                        end
                     end
                 end
             end
+            task.scream or task.wait(1) -- Проверка раз в секунду вместо каждого кадра
         end
     end)
 
-    -- 2. ESP Принтеров
+    -- 2. ESP Принтеров (Оптимизировано)
     local printerEspEnabled = false
     local printerHighlights = {}
     CreateToggle("ESP Принтеров (Деньги)", function(state)
@@ -290,26 +293,29 @@ task.spawn(function()
         end
     end)
 
-    RunService.Heartbeat:Connect(function()
-        if printerEspEnabled then
-            for _, obj in ipairs(workspace:GetDescendants()) do
-                if obj:IsA("Model") and string.match(string.lower(obj.Name), "printer") then
-                    if not printerHighlights[obj] then
-                        local hl = Instance.new("Highlight")
-                        hl.Name = "SD_PrinterESP"
-                        hl.Adornee = obj
-                        hl.FillColor = Color3.fromRGB(0, 255, 120)
-                        hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-                        hl.FillTransparency = 0.4
-                        hl.Parent = obj
-                        printerHighlights[obj] = hl
+    task.spawn(function()
+        while true do
+            if printerEspEnabled then
+                for _, obj in ipairs(workspace:GetDescendants()) do
+                    if obj:IsA("Model") and string.match(string.lower(obj.Name), "printer") then
+                        if not printerHighlights[obj] then
+                            local hl = Instance.new("Highlight")
+                            hl.Name = "SD_PrinterESP"
+                            hl.Adornee = obj
+                            hl.FillColor = Color3.fromRGB(0, 255, 120)
+                            hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                            hl.FillTransparency = 0.4
+                            hl.Parent = obj
+                            printerHighlights[obj] = hl
+                        end
                     end
                 end
             end
+            task.wait(1.5)
         end
     end)
 
-    -- 3. ESP Машин (Новая функция)
+    -- 3. ESP Машин (Оптимизировано)
     local carEspEnabled = false
     local carHighlights = {}
     CreateToggle("ESP Машин", function(state)
@@ -322,28 +328,30 @@ task.spawn(function()
         end
     end)
 
-    RunService.Heartbeat:Connect(function()
-        if carEspEnabled then
-            for _, obj in ipairs(workspace:GetDescendants()) do
-                if obj:IsA("Model") and (obj:FindFirstChild("Steering") or obj:FindFirstChild("Wheels") or string.match(string.lower(obj.Name), "car") or string.match(string.lower(obj.Name), "vehicle") or string.match(string.lower(obj.Name), "automobile")) then
-                    if not carHighlights[obj] then
-                        local hl = Instance.new("Highlight")
-                        hl.Name = "SD_CarESP"
-                        hl.Adornee = obj
-                        hl.FillColor = Color3.fromRGB(0, 160, 255)
-                        hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-                        hl.FillTransparency = 0.5
-                        hl.Parent = obj
-                        carHighlights[obj] = hl
+    task.spawn(function()
+        while true do
+            if carEspEnabled then
+                for _, obj in ipairs(workspace:GetDescendants()) do
+                    if obj:IsA("Model") and (obj:FindFirstChild("Steering") or obj:FindFirstChild("Wheels") or string.match(string.lower(obj.Name), "car") or string.match(string.lower(obj.Name), "vehicle") or string.match(string.lower(obj.Name), "automobile")) then
+                        if not carHighlights[obj] then
+                            local hl = Instance.new("Highlight")
+                            hl.Name = "SD_CarESP"
+                            hl.Adornee = obj
+                            hl.FillColor = Color3.fromRGB(0, 160, 255)
+                            hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                            hl.FillTransparency = 0.5
+                            hl.Parent = obj
+                            carHighlights[obj] = hl
+                        end
                     end
                 end
             end
+            task.wait(2)
         end
     end)
 
-    -- 4. Trails (Новая функция — шлейф за локальным игроком)
+    -- 4. Trails (Шлейф за игроком)
     local trailsEnabled = false
-    local activeTrail = nil
     CreateToggle("Trails (Шлейф за игроком)", function(state)
         trailsEnabled = state
         local char = LocalPlayer.Character
@@ -370,20 +378,18 @@ task.spawn(function()
                 trail.Lifetime = 0.8
                 trail.MinLength = 0.1
                 trail.Parent = rootPart
-                activeTrail = trail
             end
         else
-            if rootPart and rootPart:FindFirstChild("SD_Trail") then
-                rootPart.SD_Trail:Destroy()
+            if rootPart then
+                if rootPart:FindFirstChild("SD_Trail") then rootPart.SD_Trail:Destroy() end
+                if rootPart:FindFirstChild("TrailAtt0") then rootPart.TrailAtt0:Destroy() end
+                if rootPart:FindFirstChild("TrailAtt1") then rootPart.TrailAtt1:Destroy() end
             end
-            if rootPart and rootPart:FindFirstChild("TrailAtt0") then rootPart.TrailAtt0:Destroy() end
-            if rootPart and rootPart:FindFirstChild("TrailAtt1") then rootPart.TrailAtt1:Destroy() end
         end
     end)
 
-    -- 5. China Hat (Новая функция — коническая шляпа на голову, как на скрине)
+    -- 5. China Hat (Исправленный компактный размер шляпы)
     local chinaHatEnabled = false
-    local chinaHatModel = nil
     CreateToggle("China Hat (Шляпа)", function(state)
         chinaHatEnabled = state
         local char = LocalPlayer.Character
@@ -393,18 +399,17 @@ task.spawn(function()
             if not head:FindFirstChild("SD_ChinaHat") then
                 local hatPart = Instance.new("Part")
                 hatPart.Name = "SD_ChinaHat"
-                hatPart.Size = Vector3.new(3.5, 0.8, 3.5)
-                hatPart.CFrame = head.CFrame + Vector3.new(0, 1.2, 0)
+                hatPart.Size = Vector3.new(2, 0.4, 2) -- Уменьшенный размер
+                hatPart.CFrame = head.CFrame + Vector3.new(0, 1, 0)
                 hatPart.Color = Color3.fromRGB(240, 230, 210)
                 hatPart.Material = Enum.Material.SmoothPlastic
                 hatPart.CanCollide = false
                 hatPart.Massless = true
 
-                -- Делаем коническую форму с помощью Mesh
                 local mesh = Instance.new("SpecialMesh")
                 mesh.MeshType = Enum.MeshType.FileMesh
-                mesh.MeshId = "rbxassetid://1033714" -- Классический конус
-                mesh.Scale = Vector3.new(4, 1.2, 4)
+                mesh.MeshId = "rbxassetid://1033714"
+                mesh.Scale = Vector3.new(2.2, 0.8, 2.2) -- Компактный масштаб под голову
                 mesh.Parent = hatPart
 
                 local weld = Instance.new("WeldConstraint")
@@ -413,7 +418,6 @@ task.spawn(function()
                 weld.Parent = hatPart
 
                 hatPart.Parent = head
-                chinaHatModel = hatPart
             end
         else
             if head and head:FindFirstChild("SD_ChinaHat") then
@@ -422,7 +426,22 @@ task.spawn(function()
         end
     end)
 
-    -- 6. Night Mode
+    -- 6. Purple Sky (Новая функция — фиолетовое небо)
+    CreateToggle("Purple Sky (Фиолетовое небо)", function(state)
+        if state then
+            Lighting.Ambient = Color3.fromRGB(90, 50, 120)
+            Lighting.OutdoorAmbient = Color3.fromRGB(120, 80, 150)
+            Lighting.ColorShift_Top = Color3.fromRGB(180, 100, 255)
+            Lighting.ColorShift_Bottom = Color3.fromRGB(80, 20, 100)
+        else
+            Lighting.Ambient = Color3.fromRGB(120, 120, 120)
+            Lighting.OutdoorAmbient = Color3.fromRGB(120, 120, 120)
+            Lighting.ColorShift_Top = Color3.fromRGB(0, 0, 0)
+            Lighting.ColorShift_Bottom = Color3.fromRGB(0, 0, 0)
+        end
+    end)
+
+    -- 7. Night Mode
     CreateToggle("Night Mode (Ночь)", function(state)
         if state then
             Lighting.ClockTime = 0
@@ -435,7 +454,7 @@ task.spawn(function()
         end
     end)
 
-    -- 7. Fullbright
+    -- 8. Fullbright
     CreateToggle("Fullbright (Яркий свет)", function(state)
         if state then
             Lighting.GlobalShadows = false
@@ -447,7 +466,7 @@ task.spawn(function()
     end)
 
     -- ========================================================
-    -- АНИМАЦИИ ОТКРЫТИЯ / ЗАКРЫТИЯ МЕНЮ
+    -- АНИМАЦИИ ОТКРЫТИЯ СТРОГО ИЗ ПОЗИЦИИ КВАДРАТА
     -- ========================================================
 
     local function CloseMenu()
@@ -465,7 +484,10 @@ task.spawn(function()
 
     local function OpenMenu()
         if openDragging then return end
+        
+        -- Меню открывается точно в месте, куда перетащили квадрат «X»
         MainFrame.Position = OpenButton.Position
+
         TweenService:Create(OpenButton, TweenInfo.new(0.15), {Size = UDim2.new(0, 0, 0, 0)}):Play()
         task.wait(0.1)
         OpenButton.Visible = false
@@ -473,7 +495,7 @@ task.spawn(function()
         MainFrame.Size = UDim2.new(0, 0, 0, 0)
         Title.TextTransparency = 0
         TopBar.BackgroundTransparency = 0
-        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Back), {Size = UDim2.new(0, 440, 0, 360), BackgroundTransparency = 0}):Play()
+        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Back), {Size = UDim2.new(0, 440, 0, 380), BackgroundTransparency = 0}):Play()
     end
 
     CloseBtn.MouseButton1Click:Connect(CloseMenu)
