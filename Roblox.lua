@@ -1,4 +1,4 @@
--- [[ San Diego | Visual Hub (Stats Panel + Full Visuals) ]] --
+-- [[ San Diego | Visual Hub (Full Fixed Visuals + New Features + Advanced Static/Info) ]] --
 task.spawn(function()
     local Players = game:GetService("Players")
     local TweenService = game:GetService("TweenService")
@@ -6,10 +6,10 @@ task.spawn(function()
     local Lighting = game:GetService("Lighting")
     local UserInputService = game:GetService("UserInputService")
     local CoreGui = game:GetService("CoreGui")
-    local Stats = game:GetService("Stats")
+    local Camera = workspace.CurrentCamera
     local LocalPlayer = Players.LocalPlayer
 
-    -- Универсальный поиск контейнера для Delta / Roblox
+    -- Защита от дубликатов интерфейса
     local guiParent = nil
     if gethui then
         local success, res = pcall(gethui)
@@ -25,19 +25,18 @@ task.spawn(function()
 
     if not guiParent then return end
 
-    -- Защита от дубликатов
     if guiParent:FindFirstChild("SanDiegoVisualsMenu") then
         guiParent.SanDiegoVisualsMenu:Destroy()
     end
 
-    -- Главный контейнер
+    -- Главный GUI
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "SanDiegoVisualsMenu"
     ScreenGui.Parent = guiParent
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.ResetOnSpawn = false
 
-    -- Кнопка открытия
+    -- Кнопка открытия меню
     local OpenButton = Instance.new("TextButton")
     OpenButton.Name = "OpenButton"
     OpenButton.Size = UDim2.new(0, 45, 0, 45)
@@ -59,11 +58,11 @@ task.spawn(function()
     OpenStroke.Thickness = 2
     OpenStroke.Parent = OpenButton
 
-    -- Главное окно меню
+    -- Главное окно
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 0, 0, 0)
-    MainFrame.Position = UDim2.new(0.5, -250, 0.5, -180)
+    MainFrame.Position = UDim2.new(0.5, -250, 0.5, -190)
     MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
     MainFrame.BorderSizePixel = 0
     MainFrame.Visible = false
@@ -79,7 +78,7 @@ task.spawn(function()
     UIStroke.Thickness = 1.5
     UIStroke.Parent = MainFrame
 
-    -- Шапка окна
+    -- Шапка
     local TopBar = Instance.new("Frame")
     TopBar.Size = UDim2.new(1, 0, 0, 45)
     TopBar.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
@@ -102,7 +101,7 @@ task.spawn(function()
     Title.Size = UDim2.new(1, -50, 1, 0)
     Title.Position = UDim2.new(0, 15, 0, 0)
     Title.BackgroundTransparency = 1
-    Title.Text = "SAN DIEGO — Hub"
+    Title.Text = "SAN DIEGO — Hub (PRO)"
     Title.TextColor3 = Color3.fromRGB(240, 240, 255)
     Title.TextSize = 15
     Title.Font = Enum.Font.GothamBold
@@ -110,7 +109,6 @@ task.spawn(function()
     Title.TextTransparency = 1
     Title.Parent = TopBar
 
-    -- Кнопка закрытия
     local CloseBtn = Instance.new("TextButton")
     CloseBtn.Size = UDim2.new(0, 30, 0, 30)
     CloseBtn.Position = UDim2.new(1, -38, 0.5, -15)
@@ -169,7 +167,7 @@ task.spawn(function()
         end
     end)
 
-    -- Система вкладок
+    -- Вкладки
     local TabContainer = Instance.new("Frame")
     TabContainer.Size = UDim2.new(1, -20, 0, 35)
     TabContainer.Position = UDim2.new(0, 10, 0, 50)
@@ -193,7 +191,7 @@ task.spawn(function()
 
     local function CreateTab(name)
         local TabBtn = Instance.new("TextButton")
-        TabBtn.Size = UDim2.new(0, 90, 1, 0)
+        TabBtn.Size = UDim2.new(0, 100, 1, 0)
         TabBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
         TabBtn.Text = name
         TabBtn.TextColor3 = Color3.fromRGB(150, 150, 170)
@@ -246,7 +244,6 @@ task.spawn(function()
     local StaticPage = CreateTab("Static")
     local VisualsPage = CreateTab("Visuals")
 
-    -- Функция переключателя
     local function CreateToggle(parentPage, name, callback)
         local ToggleFrame = Instance.new("Frame")
         ToggleFrame.Size = UDim2.new(1, 0, 0, 40)
@@ -305,10 +302,10 @@ task.spawn(function()
     end
 
     -- ========================================================
-    -- ВКЛАДКА STATIC: PING, FPS, INTERNET (MS)
+    -- ВКЛАДКА STATIC: PING, FPS, INTERNET + INFORMATION
     -- ========================================================
     
-    -- Создаем панель отображения статистики на экране
+    -- Оверлей Пинг / ФПС
     local StatsOverlay = Instance.new("TextLabel")
     StatsOverlay.Name = "StatsOverlay"
     StatsOverlay.Size = UDim2.new(0, 180, 0, 75)
@@ -338,7 +335,40 @@ task.spawn(function()
         StatsOverlay.Visible = state
     end)
 
-    -- Обновление данных (FPS, Пинг, Интернет в реальном времени)
+    -- Оверлей Information (Время в игре, входы и т.д.)
+    local InfoOverlay = Instance.new("TextLabel")
+    InfoOverlay.Name = "InfoOverlay"
+    InfoOverlay.Size = UDim2.new(0, 220, 0, 95)
+    InfoOverlay.Position = UDim2.new(0, 15, 0, 105)
+    InfoOverlay.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+    InfoOverlay.BackgroundTransparency = 0.3
+    InfoOverlay.TextColor3 = Color3.fromRGB(0, 170, 255)
+    InfoOverlay.TextSize = 12
+    InfoOverlay.Font = Enum.Font.Code
+    InfoOverlay.TextXAlignment = Enum.TextXAlignment.Left
+    InfoOverlay.TextYAlignment = Enum.TextYAlignment.Top
+    InfoOverlay.Visible = false
+    InfoOverlay.Parent = ScreenGui
+
+    local InfoCorner = Instance.new("UICorner")
+    InfoCorner.CornerRadius = UDim.new(0, 8)
+    InfoCorner.Parent = InfoOverlay
+
+    local InfoPadding = Instance.new("UIPadding")
+    InfoPadding.PaddingLeft = UDim.new(0, 10)
+    InfoPadding.PaddingTop = UDim.new(0, 8)
+    InfoPadding.Parent = InfoOverlay
+
+    local sessionStartTime = tick()
+    local joinCount = 1 -- Количество заходов в сессию
+    local infoEnabled = false
+
+    CreateToggle(StaticPage, "Information (Время в игре / Статистика)", function(state)
+        infoEnabled = state
+        InfoOverlay.Visible = state
+    end)
+
+    -- Расчет FPS, Ping и Информации
     local lastTime = tick()
     local frameCount = 0
     local currentFPS = 60
@@ -357,14 +387,23 @@ task.spawn(function()
             pcall(function()
                 pingVal = math.floor(LocalPlayer:GetNetworkPing() * 1000)
             end)
-
             StatsOverlay.Text = string.format(" 📊 SYSTEM STATS\n FPS: %d\n Ping: %d ms\n Internet: %d ms", currentFPS, pingVal, pingVal)
+        end
+
+        if infoEnabled then
+            local playTimeSec = math.floor(tick() - sessionStartTime)
+            local hours = math.floor(playTimeSec / 3600)
+            local mins = math.floor((playTimeSec % 3600) / 60)
+            local secs = playTimeSec % 60
+
+            InfoOverlay.Text = string.format(" ℹ️ PLAYER INFO\n User: %s\n Session Time: %02d:%02d:%02d\n Visits / Joins: %d\n Server ID: %s", 
+                LocalPlayer.Name, hours, mins, secs, joinCount, tostring(game.JobId):sub(1, 6).."...")
         end
     end)
 
 
     -- ========================================================
-    -- ВКЛАДКА VISUALS
+    -- ВКЛАДКА VISUALS (ИСПРАВЛЕННЫЕ И НОВЫЕ ФУНКЦИИ)
     -- ========================================================
 
     -- 1. ESP Игроков
@@ -467,7 +506,36 @@ task.spawn(function()
         end
     end)
 
-    -- 4. Trails
+    -- 4. Fullbright (Яркий свет без тени)
+    local fullbrightConn = nil
+    CreateToggle(VisualsPage, "Fullbright (Яркое освещение)", function(state)
+        if state then
+            Lighting.Brightness = 2
+            Lighting.ClockTime = 14
+            Lighting.FogEnd = 100000
+            Lighting.GlobalShadows = false
+            fullbrightConn = RunService.RenderStepped:Connect(function()
+                Lighting.Brightness = 2
+                Lighting.ClockTime = 14
+                Lighting.GlobalShadows = false
+            end)
+        else
+            if fullbrightConn then fullbrightConn:Disconnect() end
+            Lighting.Brightness = 1
+            Lighting.GlobalShadows = true
+        end
+    end)
+
+    -- 5. FOV Changer (Широкий угол обзора)
+    CreateToggle(VisualsPage, "FOV Changer (Угол обзора 100)", function(state)
+        if state then
+            Camera.FieldOfView = 100
+        else
+            Camera.FieldOfView = 70
+        end
+    end)
+
+    -- 6. Trails (Шлейф)
     CreateToggle(VisualsPage, "Trails (Шлейф за игроком)", function(state)
         local char = LocalPlayer.Character
         local rootPart = char and char:FindFirstChild("HumanoidRootPart")
@@ -499,7 +567,7 @@ task.spawn(function()
         end
     end)
 
-    -- 5. China Hat
+    -- 7. China Hat (Шляпа)
     CreateToggle(VisualsPage, "China Hat (Шляпа)", function(state)
         local char = LocalPlayer.Character
         local head = char and char:FindFirstChild("Head")
@@ -525,7 +593,7 @@ task.spawn(function()
         end
     end)
 
-    -- 6. Invisible Player
+    -- 8. Invisible Player (Невидимка)
     CreateToggle(VisualsPage, "Invisible Player (Невидимка)", function(state)
         local char = LocalPlayer.Character
         if char then
@@ -537,7 +605,7 @@ task.spawn(function()
         end
     end)
 
-    -- 7. Aura
+    -- 9. Aura (Красная аура)
     CreateToggle(VisualsPage, "Aura (Красные эффекты)", function(state)
         local char = LocalPlayer.Character
         local torso = char and (char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso"))
@@ -557,7 +625,7 @@ task.spawn(function()
         end
     end)
 
-    -- 8. Purple Sky
+    -- 10. Purple Sky (Фиолетовое небо)
     CreateToggle(VisualsPage, "Purple Sky (Фиолетовое небо)", function(state)
         if state then
             Lighting.Ambient = Color3.fromRGB(90, 50, 120)
@@ -597,7 +665,7 @@ task.spawn(function()
         MainFrame.Size = UDim2.new(0, 0, 0, 0)
         Title.TextTransparency = 0
         TopBar.BackgroundTransparency = 0
-        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Back), {Size = UDim2.new(0, 440, 0, 380), BackgroundTransparency = 0}):Play()
+        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Back), {Size = UDim2.new(0, 440, 0, 400), BackgroundTransparency = 0}):Play()
     end
 
     CloseBtn.MouseButton1Click:Connect(CloseMenu)
