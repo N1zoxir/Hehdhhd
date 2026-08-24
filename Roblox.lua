@@ -243,7 +243,7 @@ task.spawn(function()
     end
 
     -- ========================================================
-    -- ОПТИМИЗИРОВАННЫЙ ФУНКЦИОНАЛ
+    -- ФУНКЦИОНАЛ
     -- ========================================================
 
     -- 1. ESP Игроков
@@ -350,7 +350,7 @@ task.spawn(function()
         end
     end)
 
-    -- 4. Trails (Шлейф за игроком)
+    -- 4. Trails (Шлейф)
     local trailsEnabled = false
     CreateToggle("Trails (Шлейф за игроком)", function(state)
         trailsEnabled = state
@@ -388,7 +388,7 @@ task.spawn(function()
         end
     end)
 
-    -- 5. China Hat (Компактная шляпа)
+    -- 5. China Hat (Шляпа)
     local chinaHatEnabled = false
     CreateToggle("China Hat (Шляпа)", function(state)
         chinaHatEnabled = state
@@ -426,7 +426,51 @@ task.spawn(function()
         end
     end)
 
-    -- 6. Purple Sky (Фиолетовое небо)
+    -- 6. Invisible Player (Невидимка только для себя)
+    CreateToggle("Invisible Player (Невидимка)", function(state)
+        local char = LocalPlayer.Character
+        if char then
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") or part:IsA("Decal") then
+                    if state then
+                        part.LocalTransparencyModifier = 1
+                    else
+                        part.LocalTransparencyModifier = 0
+                    end
+                end
+            end
+        end
+    end)
+
+    -- 7. Aura (Красные эффекты возле туловища)
+    local auraEnabled = false
+    CreateToggle("Aura (Красные эффекты)", function(state)
+        auraEnabled = state
+        local char = LocalPlayer.Character
+        local torso = char and (char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso"))
+
+        if auraEnabled and torso then
+            if not torso:FindFirstChild("SD_AuraEmitter") then
+                local emitter = Instance.new("ParticleEmitter")
+                emitter.Name = "SD_AuraEmitter"
+                emitter.Color = ColorSequence.new(Color3.fromRGB(255, 30, 30))
+                emitter.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.5), NumberSequenceKeypoint.new(1, 1.2)})
+                emitter.Texture = "rbxassetid://258125463" -- Мягкая точка
+                emitter.Lifetime = NumberRange.new(0.5, 1)
+                emitter.Rate = 25
+                emitter.Speed = NumberRange.new(2, 4)
+                emitter.SpreadAngle = Vector2.new(360, 360)
+                emitter.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.2), NumberSequenceKeypoint.new(1, 1)})
+                emitter.Parent = torso
+            end
+        else
+            if torso and torso:FindFirstChild("SD_AuraEmitter") then
+                torso.SD_AuraEmitter:Destroy()
+            end
+        end
+    end)
+
+    -- 8. Purple Sky (Фиолетовое небо)
     CreateToggle("Purple Sky (Фиолетовое небо)", function(state)
         if state then
             Lighting.Ambient = Color3.fromRGB(90, 50, 120)
@@ -441,7 +485,7 @@ task.spawn(function()
         end
     end)
 
-    -- 7. Night Mode
+    -- 9. Night Mode
     CreateToggle("Night Mode (Ночь)", function(state)
         if state then
             Lighting.ClockTime = 0
@@ -454,7 +498,7 @@ task.spawn(function()
         end
     end)
 
-    -- 8. Fullbright
+    -- 10. Fullbright
     CreateToggle("Fullbright (Яркий свет)", function(state)
         if state then
             Lighting.GlobalShadows = false
@@ -466,7 +510,7 @@ task.spawn(function()
     end)
 
     -- ========================================================
-    -- АНИМАЦИИ ОТКРЫТИЯ СТРОГО ИЗ ПОЗИЦИИ КВАДРАТА
+    -- АНИМАЦИИ ОТКРЫТИЯ ИЗ ПОЗИЦИИ КВАДРАТА «X»
     -- ========================================================
 
     local function CloseMenu()
@@ -485,6 +529,7 @@ task.spawn(function()
     local function OpenMenu()
         if openDragging then return end
         
+        -- Устанавливаем позицию меню точно туда, куда перетащили квадрат
         MainFrame.Position = OpenButton.Position
 
         TweenService:Create(OpenButton, TweenInfo.new(0.15), {Size = UDim2.new(0, 0, 0, 0)}):Play()
