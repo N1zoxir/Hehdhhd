@@ -1,4 +1,4 @@
--- [[ San Diego | Visual Hub (Full Features + Auto Monalis Farm + Money Wash + Speed) ]] --
+-- [[ San Diego | Visual Hub (Stats Panel + Full Visuals) ]] --
 task.spawn(function()
     local Players = game:GetService("Players")
     local TweenService = game:GetService("TweenService")
@@ -6,6 +6,7 @@ task.spawn(function()
     local Lighting = game:GetService("Lighting")
     local UserInputService = game:GetService("UserInputService")
     local CoreGui = game:GetService("CoreGui")
+    local Stats = game:GetService("Stats")
     local LocalPlayer = Players.LocalPlayer
 
     -- Универсальный поиск контейнера для Delta / Roblox
@@ -242,7 +243,7 @@ task.spawn(function()
         return Page
     end
 
-    local FarmPage = CreateTab("Farm")
+    local StaticPage = CreateTab("Static")
     local VisualsPage = CreateTab("Visuals")
 
     -- Функция переключателя
@@ -304,64 +305,60 @@ task.spawn(function()
     end
 
     -- ========================================================
-    -- ВКЛАДКА FARM: AUTO MONALIS (ПОКУПКА -> СДАЧА -> ОТМЫВКА)
+    -- ВКЛАДКА STATIC: PING, FPS, INTERNET (MS)
     -- ========================================================
-    local autoMonalisEnabled = false
-    local buyAmount = 5 -- Количество покупок за один заход
+    
+    -- Создаем панель отображения статистики на экране
+    local StatsOverlay = Instance.new("TextLabel")
+    StatsOverlay.Name = "StatsOverlay"
+    StatsOverlay.Size = UDim2.new(0, 180, 0, 75)
+    StatsOverlay.Position = UDim2.new(0, 15, 0, 15)
+    StatsOverlay.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+    StatsOverlay.BackgroundTransparency = 0.3
+    StatsOverlay.TextColor3 = Color3.fromRGB(0, 255, 120)
+    StatsOverlay.TextSize = 13
+    StatsOverlay.Font = Enum.Font.Code
+    StatsOverlay.TextXAlignment = Enum.TextXAlignment.Left
+    StatsOverlay.TextYAlignment = Enum.TextYAlignment.Top
+    StatsOverlay.Visible = false
+    StatsOverlay.Parent = ScreenGui
 
-    CreateToggle(FarmPage, "Auto Monalis (Фарм + Сдача + Отмывка)", function(state)
-        autoMonalisEnabled = state
+    local OverlayCorner = Instance.new("UICorner")
+    OverlayCorner.CornerRadius = UDim.new(0, 8)
+    OverlayCorner.Parent = StatsOverlay
+
+    local OverlayPadding = Instance.new("UIPadding")
+    OverlayPadding.PaddingLeft = UDim.new(0, 10)
+    OverlayPadding.PaddingTop = UDim.new(0, 8)
+    OverlayPadding.Parent = StatsOverlay
+
+    local statsEnabled = false
+    CreateToggle(StaticPage, "Show Stats (Ping, FPS, Internet)", function(state)
+        statsEnabled = state
+        StatsOverlay.Visible = state
     end)
 
-    -- Основной поток точного маршрута
-    task.spawn(function()
-        local posBuy = Vector3.new(6807.84, 17.38, 24.93)
-        local posSell = Vector3.new(-78.81, 49.21, 432.97)
-        local posWash = Vector3.new(6809.42, 17.40, -38.19)
+    -- Обновление данных (FPS, Пинг, Интернет в реальном времени)
+    local lastTime = tick()
+    local frameCount = 0
+    local currentFPS = 60
 
-        while true do
-            if autoMonalisEnabled then
-                pcall(function()
-                    local char = LocalPlayer.Character
-                    local root = char and char:FindFirstChild("HumanoidRootPart")
-                    if root then
-                        -- 1. Идем покупать картины (количество задано переменной)
-                        root.CFrame = CFrame.new(posBuy)
-                        task.wait(0.6)
-                        for i = 1, buyAmount do
-                            for _, obj in ipairs(workspace:GetDescendants()) do
-                                if obj:IsA("ProximityPrompt") and (string.match(string.lower(obj.ActionText), "мона лиз") or string.match(string.lower(obj.Parent.Name), "mona")) then
-                                    fireproximityprompt(obj)
-                                    task.wait(0.4)
-                                end
-                            end
-                        end
+    RunService.RenderStepped:Connect(function()
+        frameCount = frameCount + 1
+        local currentTime = tick()
+        if currentTime - lastTime >= 1 then
+            currentFPS = frameCount
+            frameCount = 0
+            lastTime = currentTime
+        end
 
-                        -- 2. Едем/Идем сдавать контрабанду
-                        task.wait(0.5)
-                        root.CFrame = CFrame.new(posSell)
-                        task.wait(0.8)
-                        for _, obj in ipairs(workspace:GetDescendants()) do
-                            if obj:IsA("ProximityPrompt") and (string.match(string.lower(obj.ActionText), "продать") or string.match(string.lower(obj.Parent.Name), "sell")) then
-                                fireproximityprompt(obj)
-                                task.wait(0.5)
-                            end
-                        end
+        if statsEnabled then
+            local pingVal = 0
+            pcall(function()
+                pingVal = math.floor(LocalPlayer:GetNetworkPing() * 1000)
+            end)
 
-                        -- 3. Идем отмывать деньги
-                        task.wait(0.5)
-                        root.CFrame = CFrame.new(posWash)
-                        task.wait(0.8)
-                        for _, obj in ipairs(workspace:GetDescendants()) do
-                            if obj:IsA("ProximityPrompt") and (string.match(string.lower(obj.ActionText), "отмыть") or string.match(string.lower(obj.Parent.Name), "wash")) then
-                                fireproximityprompt(obj)
-                                task.wait(0.5)
-                            end
-                        end
-                    end
-                end)
-            end
-            task.wait(3)
+            StatsOverlay.Text = string.format(" 📊 SYSTEM STATS\n FPS: %d\n Ping: %d ms\n Internet: %d ms", currentFPS, pingVal, pingVal)
         end
     end)
 
