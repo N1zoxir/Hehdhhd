@@ -1,4 +1,4 @@
--- [[ San Diego | Visual Hub (Full Features + Universal GUI) ]] --
+-- [[ San Diego | Visual Hub (Full Features + New Visuals: Cars, Trails, China Hat) ]] --
 task.spawn(function()
     local Players = game:GetService("Players")
     local TweenService = game:GetService("TweenService")
@@ -243,7 +243,7 @@ task.spawn(function()
     end
 
     -- ========================================================
-    -- ВСЕ ФУНКЦИОНАЛЬНЫЕ ВИЗУАЛЫ
+    -- ФУНКЦИОНАЛ (СТАРЫЕ + НОВЫЕ ФУНКЦИИ)
     -- ========================================================
 
     -- 1. ESP Игроков
@@ -309,7 +309,120 @@ task.spawn(function()
         end
     end)
 
-    -- 3. Night Mode
+    -- 3. ESP Машин (Новая функция)
+    local carEspEnabled = false
+    local carHighlights = {}
+    CreateToggle("ESP Машин", function(state)
+        carEspEnabled = state
+        if not carEspEnabled then
+            for _, h in pairs(carHighlights) do
+                if h then h:Destroy() end
+            end
+            carHighlights = {}
+        end
+    end)
+
+    RunService.Heartbeat:Connect(function()
+        if carEspEnabled then
+            for _, obj in ipairs(workspace:GetDescendants()) do
+                if obj:IsA("Model") and (obj:FindFirstChild("Steering") or obj:FindFirstChild("Wheels") or string.match(string.lower(obj.Name), "car") or string.match(string.lower(obj.Name), "vehicle") or string.match(string.lower(obj.Name), "automobile")) then
+                    if not carHighlights[obj] then
+                        local hl = Instance.new("Highlight")
+                        hl.Name = "SD_CarESP"
+                        hl.Adornee = obj
+                        hl.FillColor = Color3.fromRGB(0, 160, 255)
+                        hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                        hl.FillTransparency = 0.5
+                        hl.Parent = obj
+                        carHighlights[obj] = hl
+                    end
+                end
+            end
+        end
+    end)
+
+    -- 4. Trails (Новая функция — шлейф за локальным игроком)
+    local trailsEnabled = false
+    local activeTrail = nil
+    CreateToggle("Trails (Шлейф за игроком)", function(state)
+        trailsEnabled = state
+        local char = LocalPlayer.Character
+        local rootPart = char and char:FindFirstChild("HumanoidRootPart")
+
+        if trailsEnabled and rootPart then
+            if not rootPart:FindFirstChild("SD_Trail") then
+                local attachment0 = Instance.new("Attachment", rootPart)
+                attachment0.Name = "TrailAtt0"
+                attachment0.Position = Vector3.new(0, 1, 0)
+
+                local attachment1 = Instance.new("Attachment", rootPart)
+                attachment1.Name = "TrailAtt1"
+                attachment1.Position = Vector3.new(0, -1, 0)
+
+                local trail = Instance.new("Trail")
+                trail.Name = "SD_Trail"
+                trail.Attachment0 = attachment0
+                trail.Attachment1 = attachment1
+                trail.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 170, 255)),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 255))
+                })
+                trail.Lifetime = 0.8
+                trail.MinLength = 0.1
+                trail.Parent = rootPart
+                activeTrail = trail
+            end
+        else
+            if rootPart and rootPart:FindFirstChild("SD_Trail") then
+                rootPart.SD_Trail:Destroy()
+            end
+            if rootPart and rootPart:FindFirstChild("TrailAtt0") then rootPart.TrailAtt0:Destroy() end
+            if rootPart and rootPart:FindFirstChild("TrailAtt1") then rootPart.TrailAtt1:Destroy() end
+        end
+    end)
+
+    -- 5. China Hat (Новая функция — коническая шляпа на голову, как на скрине)
+    local chinaHatEnabled = false
+    local chinaHatModel = nil
+    CreateToggle("China Hat (Шляпа)", function(state)
+        chinaHatEnabled = state
+        local char = LocalPlayer.Character
+        local head = char and char:FindFirstChild("Head")
+
+        if chinaHatEnabled and head then
+            if not head:FindFirstChild("SD_ChinaHat") then
+                local hatPart = Instance.new("Part")
+                hatPart.Name = "SD_ChinaHat"
+                hatPart.Size = Vector3.new(3.5, 0.8, 3.5)
+                hatPart.CFrame = head.CFrame + Vector3.new(0, 1.2, 0)
+                hatPart.Color = Color3.fromRGB(240, 230, 210)
+                hatPart.Material = Enum.Material.SmoothPlastic
+                hatPart.CanCollide = false
+                hatPart.Massless = true
+
+                -- Делаем коническую форму с помощью Mesh
+                local mesh = Instance.new("SpecialMesh")
+                mesh.MeshType = Enum.MeshType.FileMesh
+                mesh.MeshId = "rbxassetid://1033714" -- Классический конус
+                mesh.Scale = Vector3.new(4, 1.2, 4)
+                mesh.Parent = hatPart
+
+                local weld = Instance.new("WeldConstraint")
+                weld.Part0 = head
+                weld.Part1 = hatPart
+                weld.Parent = hatPart
+
+                hatPart.Parent = head
+                chinaHatModel = hatPart
+            end
+        else
+            if head and head:FindFirstChild("SD_ChinaHat") then
+                head.SD_ChinaHat:Destroy()
+            end
+        end
+    end)
+
+    -- 6. Night Mode
     CreateToggle("Night Mode (Ночь)", function(state)
         if state then
             Lighting.ClockTime = 0
@@ -322,7 +435,7 @@ task.spawn(function()
         end
     end)
 
-    -- 4. Fullbright
+    -- 7. Fullbright
     CreateToggle("Fullbright (Яркий свет)", function(state)
         if state then
             Lighting.GlobalShadows = false
@@ -360,7 +473,7 @@ task.spawn(function()
         MainFrame.Size = UDim2.new(0, 0, 0, 0)
         Title.TextTransparency = 0
         TopBar.BackgroundTransparency = 0
-        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Back), {Size = UDim2.new(0, 440, 0, 320), BackgroundTransparency = 0}):Play()
+        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Back), {Size = UDim2.new(0, 440, 0, 360), BackgroundTransparency = 0}):Play()
     end
 
     CloseBtn.MouseButton1Click:Connect(CloseMenu)
